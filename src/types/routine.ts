@@ -1,4 +1,3 @@
-
 export interface RoutineItem {
   id: string;
   time: string;
@@ -13,6 +12,10 @@ export interface RoutineItem {
   completionHistory: CompletionRecord[];
   reminderSent?: boolean;
   startedAt?: string;
+  duration: number; // estimated time in minutes
+  compressible: boolean; // can be shortened if needed
+  dependsOn?: string; // optional task ID that must come before
+  minDuration?: number; // minimum time if compressed (only if compressible)
 }
 
 export interface CompletionRecord {

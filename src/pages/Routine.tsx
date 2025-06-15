@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Clock, Plus, CheckCircle, AlertTriangle, RotateCcw, Star, Play, Trophy } from "lucide-react";
+import { Clock, Plus, CheckCircle, AlertTriangle, RotateCcw, Star, Play, Trophy, Zap } from "lucide-react";
 import { AddTaskDialog } from "@/components/AddTaskDialog";
 import { RecalibrateDialog } from "@/components/RecalibrateDialog";
+import { UrgentTaskDialog } from "@/components/UrgentTaskDialog";
 import { TaskTracker } from "@/components/TaskTracker";
 import { ReminderSystem } from "@/components/ReminderSystem";
 import { StreakRewards } from "@/components/StreakRewards";
 import { RoutineItem, CompletionRecord, StreakReward } from "@/types/routine";
+import { recalibrateWithUrgentTask } from "@/utils/recalibrationLogic";
 import { useToast } from "@/hooks/use-toast";
 
 const Routine = () => {
@@ -23,7 +25,10 @@ const Routine = () => {
       streak: 12,
       quality: 5,
       completionHistory: [],
-      lastCompleted: new Date().toISOString()
+      lastCompleted: new Date().toISOString(),
+      duration: 30,
+      compressible: true,
+      minDuration: 15
     },
     { 
       id: '2', 
@@ -34,7 +39,10 @@ const Routine = () => {
       flexible: true,
       points: 50,
       streak: 8,
-      completionHistory: []
+      completionHistory: [],
+      duration: 45,
+      compressible: true,
+      minDuration: 20
     },
     { 
       id: '3', 
@@ -45,7 +53,9 @@ const Routine = () => {
       flexible: false,
       points: 25,
       streak: 15,
-      completionHistory: []
+      completionHistory: [],
+      duration: 30,
+      compressible: false
     },
     { 
       id: '4', 
@@ -53,15 +63,32 @@ const Routine = () => {
       task: "Work Focus Time", 
       status: "upcoming", 
       priority: "high", 
-      flexible: false,
+      flexible: true,
       points: 100,
       streak: 5,
-      completionHistory: []
+      completionHistory: [],
+      duration: 90,
+      compressible: true,
+      minDuration: 60
+    },
+    { 
+      id: '5', 
+      time: "11:00 AM", 
+      task: "Client Meeting", 
+      status: "upcoming", 
+      priority: "high", 
+      flexible: false,
+      points: 150,
+      streak: 0,
+      completionHistory: [],
+      duration: 60,
+      compressible: false
     },
   ]);
 
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isRecalibrateOpen, setIsRecalibrateOpen] = useState(false);
+  const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedTask, setSelectedTask] = useState<RoutineItem | null>(null);
   const [isTaskTrackerOpen, setIsTaskTrackerOpen] = useState(false);
@@ -237,6 +264,33 @@ const Routine = () => {
     setIsRecalibrateOpen(true);
   };
 
+  const handleUrgentTask = (taskDescription: string, duration: number) => {
+    const result = recalibrateWithUrgentTask(routineItems, { task: taskDescription, duration }, currentTime);
+    
+    if (result.success) {
+      setRoutineItems(result.adjustedTasks);
+      
+      let toastMessage = result.message;
+      if (result.compressions.length > 0) {
+        const compressedTasks = result.compressions.map(c => 
+          routineItems.find(t => t.id === c.taskId)?.task
+        ).join(', ');
+        toastMessage += ` Compressed: ${compressedTasks}`;
+      }
+      
+      toast({
+        title: "Routine Recalibrated! ⚡",
+        description: toastMessage,
+      });
+    } else {
+      toast({
+        title: "Recalibration Failed 😔",
+        description: result.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getMissedTasksCount = () => routineItems.filter(item => item.status === 'missed').length;
 
   return (
@@ -285,13 +339,22 @@ const Routine = () => {
             <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Today's Schedule</h2>
-                <button 
-                  onClick={() => setIsAddTaskOpen(true)}
-                  className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Task
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setIsUrgentTaskOpen(true)}
+                    className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    <Zap className="h-4 w-4" />
+                    Urgent Task
+                  </button>
+                  <button 
+                    onClick={() => setIsAddTaskOpen(true)}
+                    className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Task
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-3">
@@ -328,6 +391,9 @@ const Routine = () => {
                       </div>
                       <div className="text-sm text-gray-500 flex items-center gap-3 mt-1">
                         <span>{item.time}</span>
+                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
+                          {item.duration}min
+                        </span>
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           item.priority === 'high' ? 'bg-red-100 text-red-700' :
                           item.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
@@ -347,6 +413,11 @@ const Routine = () => {
                         {item.flexible && (
                           <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">
                             Flexible
+                          </span>
+                        )}
+                        {item.compressible && (
+                          <span className="px-2 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-full">
+                            Compressible
                           </span>
                         )}
                       </div>
@@ -391,6 +462,12 @@ const Routine = () => {
         isOpen={isAddTaskOpen} 
         onClose={() => setIsAddTaskOpen(false)}
         onAddTask={addTask}
+      />
+
+      <UrgentTaskDialog
+        isOpen={isUrgentTaskOpen}
+        onClose={() => setIsUrgentTaskOpen(false)}
+        onAddUrgentTask={handleUrgentTask}
       />
 
       <RecalibrateDialog
