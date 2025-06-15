@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -6,318 +7,21 @@ import { RoutineBanner } from "@/components/RoutineBanner";
 import { RoutineCalendar } from "@/components/RoutineCalendar";
 import { UrgentTaskDialog } from "@/components/UrgentTaskDialog";
 import { Calendar, Zap } from "lucide-react";
-import { useGoals } from "@/hooks/useGoals";
-import { ReminderNoteItem } from '@/types/reminders';
-import { useDayStart } from "@/hooks/useDayStart";
-import { RoutineItem } from "@/types/routine";
-import { useTasks } from "@/hooks/useTasks";
-import { PointsButton } from "@/components/PointsButton";
-import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
-import { countSubGoals } from "@/utils/goalProgress";
-import { formatTime } from "@/utils/formatTime";
-import { getCompletionCountsByDay } from "@/utils/getCompletionCountsByDay";
+import { DashboardHeader } from "@/components/DashboardHeader";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
-// --- Routine data (Minimal, to demo dynamic) ---
-const ROUTINE_STORAGE_KEY = "user_routine";
-const REMINDER_STORAGE_KEY = "reminders_notes";
-
+// --- Page logic only, all business logic refactored to hooks ---
 const Index = () => {
-  const [routineItems, setRoutineItems] = useState<RoutineItem[]>([]);
-
-  // Load routine from localStorage and listen to changes
-  useEffect(() => {
-    const loadRoutine = () => {
-      const stored = localStorage.getItem(ROUTINE_STORAGE_KEY);
-      if (stored) {
-        try {
-          setRoutineItems(JSON.parse(stored));
-        } catch {
-          setRoutineItems([]);
-        }
-      } else {
-        setRoutineItems([]);
-      }
-    };
-    loadRoutine();
-    window.addEventListener('storage', loadRoutine);
-    // fallback interval for local routines from same tab
-    const interval = setInterval(loadRoutine, 2000); 
-    return () => {
-      window.removeEventListener('storage', loadRoutine);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Replace separate local tasks state with useTasks hook
-  const { tasks } = useTasks();
-
-  // Patch tasks with `completedAt` upon completion (to support weekly stats)
-  React.useEffect(() => {
-    const updatedTasks = tasks.map(t =>
-      t.completed && !t.completedAt
-        ? { ...t, completedAt: new Date().toISOString() }
-        : t
-    );
-    // Only update if any task gets newly completed w/o completedAt
-    if (updatedTasks.some((t, i) => tasks[i] !== t)) {
-      localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-    }
-  }, [tasks]);
-
-  // Patch routineItems with `completedAt` upon completion (to support weekly stats)
-  React.useEffect(() => {
-    const updatedRoutines = routineItems.map(r =>
-      r.status === "completed" && !r.completedAt
-        ? { ...r, completedAt: new Date().toISOString() }
-        : r
-    );
-    if (updatedRoutines.some((r, i) => routineItems[i] !== r)) {
-      localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(updatedRoutines));
-    }
-  }, [routineItems]);
-
-  // Reminders: sync with the reminders_notes localStorage key
-  const [reminders, setReminders] = useState<ReminderNoteItem[]>([]);
-  useEffect(() => {
-    const stored = localStorage.getItem(REMINDER_STORAGE_KEY);
-    if (stored) {
-      try {
-        setReminders(JSON.parse(stored));
-      } catch {
-        setReminders([]);
-      }
-    } else {
-      setReminders([]);
-    }
-  }, []);
-
-  // Listen for localStorage changes from other tabs/windows and also whenever dashboard is re-rendered
-  useEffect(() => {
-    const handler = () => {
-      const stored = localStorage.getItem(REMINDER_STORAGE_KEY);
-      if (stored) {
-        try {
-          setReminders(JSON.parse(stored));
-        } catch {
-          setReminders([]);
-        }
-      } else {
-        setReminders([]);
-      }
-    };
-    window.addEventListener('storage', handler);
-    const interval = setInterval(handler, 2000); // fallback: check every 2s
-    return () => {
-      window.removeEventListener('storage', handler);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Day start (wake up logic)
-  const [dayStarted, wakeUpTime, startDay] = useDayStart();
-
-  // Goals - dynamic live from hook
-  const { goals } = useGoals();
-
-  // At top of component:
-  const [points, setPointsState] = React.useState(0);
-
-  React.useEffect(() => {
-    setPointsState(getPoints());
-    const unsubscribe = subscribeToPointsChange(setPointsState);
-    return () => unsubscribe();
-  }, []);
-
-  // Derived dashboard data from modules:
-  const routineTotal = routineItems.length;
-  const routineCompleted = routineItems.filter((r) => r.status === 'completed').length;
-
-  // Use correct type: filter for "current" not from a "completed" static value
-  const current = routineItems.find((r) => r.status === "current");
-  const next = routineItems.find((r) => r.status === "upcoming");
-
-  const routineSummary = {
-    completed: routineCompleted,
-    total: routineTotal,
-    currentTask: current?.task ?? "",
-    nextTask: next?.task ?? "",
-    nextTime: next?.time ?? "",
-    progressRatio: `${routineCompleted === 0 ? 0 : Math.min((routineCompleted / routineTotal) * 100,100)}%`,
-  };
-
-  // 2. Tasks summary
-  const quickTasks = tasks.filter((t) => !t.completed).map((t) => ({ id: t.id, name: t.task }));
-  const taskSummary = {
-    left: quickTasks.length,
-    items: quickTasks,
-  };
-
-  // 3. Goal summary (first goal, fallback blank)
-  const firstGoal = goals[0];
-  let completedDays = 0;
-  let totalDays = 0;
-  let totalTimeSpent = 0;
-  let incompleteItems = 0;
-  if (firstGoal) {
-    const { total, completed } = countSubGoals(firstGoal.subGoals ?? []);
-    completedDays = completed;
-    totalDays = total;
-    totalTimeSpent = firstGoal.timerState?.currentTime || 0;
-
-    // Calculate incomplete subgoals recursively
-    function countIncomplete(subGoals) {
-      return subGoals.reduce(
-        (acc, sg) => {
-          const inner = countIncomplete(sg.subGoals ?? []);
-          return acc + (sg.isCompleted ? 0 : 1) + inner;
-        },
-        0
-      );
-    }
-    incompleteItems = countIncomplete(firstGoal.subGoals ?? []);
-    // If the main goal itself is not completed and has subgoals, consider it an additional item left (optional; adjust logic to your preference)
-    // For now: Only count sub-goals, unless you wish to include the root goal as incomplete item.
-  }
-
-  const percentDone = totalDays === 0 ? 0 : Math.floor((completedDays / totalDays) * 100);
-
-  // New: Show "Total time spent" and "items left" instead of transparent "days completed" and "days remaining"
-  const goalSummary = {
-    name: firstGoal?.title ?? "",
-    percent: percentDone,
-    totalTimeSpent: formatTime(totalTimeSpent), // nicely formatted
-    incompleteItems,
-    // completedDays, totalDays, and daysLeft fields are not used anymore for dashboard display
-  };
-
-  // 4. Rewards - demo via points calculated from tasks/goals etc
-  // In rewardsSummary and pointsSummary use points instead of local calc:
-  const rewardsSummary = {
-    totalPoints: points,
-    streak: 7,
-    nextRewardAt: 1500,
-    lastPoints: 15,
-  };
-
-  // --- Points summary for the Points dashboard tab ---
-  // ...and so on...
-  const pointsSummary = {
-    totalPoints: points,
-    lastPoints: rewardsSummary.lastPoints,
-    streak: rewardsSummary.streak,
-    nextRewardAt: rewardsSummary.nextRewardAt,
-  };
-
-  // 5. Reminders - mapped into Dashboard format
-  const remindersDashboard = reminders
-    .filter((r) => r.type === "reminder") // Only reminders, not notes
-    .slice(0,5)
-    .map((r) => ({
-      id: r.id,
-      label: r.title,
-      time: r.time || (r.date ? new Date(r.date as string).toLocaleDateString() : ""),
-    }));
-
-  // 6. Weekly - demo, calculate percent change from previous
-  const weeklyCounts = getCompletionCountsByDay({
-    tasks,
-    routines: routineItems,
-  });
-  const maxCount = Math.max(1, ...weeklyCounts);
-  const weeklyBars = weeklyCounts.map(n => Math.round((n / maxCount) * 95 + 5)); // Minimum visible bar
-  const totalThisWeek = weeklyCounts.reduce((a, b) => a + b, 0);
-  // For percent improvement: compare last 7 vs previous 7 days
-  // We'll just set "improving" if today >= yesterday total for simplicity
-  // (Optional: more advanced stats)
-  const weeklyStats = {
-    percent: totalThisWeek, // Now using real count
-    bars: weeklyBars,
-    improving: weeklyCounts[6] >= weeklyCounts[5],
-  };
-
-  // NEW: DashboardTile config (titles, ordering, labels, icon, color class, etc)
-  const dashboardConfig = [
-    {
-      key: "routine",
-      title: "Today's Routine",
-      icon: "Clock",
-      bgClass: "from-blue-500 via-blue-600 to-indigo-700",
-      getData: () => ({
-        completed: routineSummary.completed,
-        total: routineSummary.total,
-        currentLabel: "Current",
-        mainText: routineSummary.currentTask ?? "-",
-        nextLabel: "Next",
-        nextText: routineSummary.nextTask
-          ? `${routineSummary.nextTask} (${routineSummary.nextTime})`
-          : "—",
-        progress: routineSummary.progressRatio,
-        statusText: `${routineSummary.completed}/${routineSummary.total} Done`,
-      }),
-    },
-    {
-      key: "tasks",
-      title: "Quick Tasks",
-      icon: "CheckCircle2",
-      bgClass: "from-emerald-500 via-green-600 to-teal-700",
-      getData: () => ({
-        left: taskSummary.left,
-        statusText: `${taskSummary.left} Left`,
-        preview: taskSummary.items.slice(0, 2),
-      }),
-    },
-    {
-      key: "goal",
-      title: firstGoal?.title || "Goal Progress",
-      icon: "Target",
-      bgClass: "from-purple-500 via-violet-600 to-purple-700",
-      getData: () => ({
-        percent: goalSummary.percent,
-        statusText: `${goalSummary.percent}%`,
-        totalTimeSpent: goalSummary.totalTimeSpent,
-        incompleteItems: goalSummary.incompleteItems,
-      }),
-    },
-    {
-      key: "rewards",
-      title: "Points & Rewards",
-      icon: "Star",
-      bgClass: "from-orange-500 via-amber-600 to-yellow-600",
-      getData: () => ({
-        lastPoints: rewardsSummary.lastPoints,
-        totalPoints: rewardsSummary.totalPoints,
-        streak: rewardsSummary.streak,
-        nextRewardAt: rewardsSummary.nextRewardAt,
-        progress: `${Math.min(
-          (rewardsSummary.totalPoints / rewardsSummary.nextRewardAt) * 100,
-          100
-        )}%`,
-        statusText: `+${rewardsSummary.lastPoints}`,
-      }),
-    },
-    {
-      key: "reminders",
-      title: "Smart Reminders",
-      icon: "Calendar",
-      bgClass: "from-pink-500 via-rose-600 to-red-600",
-      getData: () => ({
-        reminders: remindersDashboard.slice(0, 2),
-        statusText: `${remindersDashboard.length} Active`,
-      }),
-    },
-    {
-      key: "weekly",
-      title: "Weekly Progress",
-      icon: "TrendingUp",
-      bgClass: "from-cyan-500 via-blue-600 to-indigo-700",
-      getData: () => ({
-        percent: weeklyStats.percent,
-        improving: weeklyStats.improving,
-        bars: weeklyStats.bars,
-        statusText: `${weeklyStats.percent > 0 ? "+" : ""}${weeklyStats.percent}`,
-      }),
-    },
-  ];
+  // Extract all dashboard logic/data from hook
+  const {
+    dayStarted,
+    wakeUpTime,
+    startDay,
+    dashboardConfig,
+    points,
+    routineItems,
+    nextRoutine,
+  } = useDashboardData();
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
@@ -326,30 +30,12 @@ const Index = () => {
     console.log('Urgent task:', taskDescription, duration);
   };
 
-  // Fullscreen overlay if day not started yet AND after 2 AM
+  // Live morning overlay
   const [showOverlay, setShowOverlay] = useState(false);
   useEffect(() => {
     const now = new Date();
     setShowOverlay(!dayStarted && now.getHours() >= 2);
   }, [dayStarted]);
-
-  // For the RoutineBanner, pass today's first routine as "suggested", and main logic for lateness
-  // The RoutineBanner will now use these dynamic routineItems
-  const nextRoutine = routineItems
-    .slice()
-    .sort((a, b) => {
-      const parseTime = (t: string) => {
-        // '6:00 AM' or '18:00'
-        const [time, suffix] = t.split(" ");
-        let [h, m] = time.split(':').map(Number);
-        if (suffix) {
-          if (suffix.toLowerCase() === "pm" && h < 12) h += 12;
-          if (suffix.toLowerCase() === "am" && h === 12) h = 0;
-        }
-        return h * 60 + m;
-      };
-      return parseTime(a.time) - parseTime(b.time);
-    })[0];
 
   return (
     <SidebarProvider>
@@ -400,27 +86,14 @@ const Index = () => {
           {/* Show points as simple black text below action buttons */}
           <div className="flex justify-end mb-2">
             <span className="text-base font-semibold text-black mr-6">
-              Points: {pointsSummary.totalPoints}
+              Points: {points}
             </span>
           </div>
 
-          <header className="mb-8">
-            <div className="flex items-center gap-3 mb-3">
-              <h1 className="text-3xl xl:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent">
-                Jeevan Sathi
-              </h1>
-              <div className="px-3 py-1 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 text-sm font-medium rounded-full border border-blue-200/50">
-                AI Powered
-              </div>
-            </div>
-            <div className="text-lg xl:text-xl text-gray-600 font-medium mb-2">
-              Your Intelligent Daily Companion 🚀
-            </div>
-            <div className="text-base text-gray-500 max-w-2xl">
-              Master your day with adaptive routines, smart reminders, and motivational rewards.
-            </div>
-          </header>
-          
+          {/* Dashboard greeting header */}
+          <DashboardHeader />
+
+          {/* Routine banner and dashboard tiles with config */}
           <RoutineBanner
             wakeUpTime={wakeUpTime}
             routineItems={routineItems}
