@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Target, TrendingUp, Calendar, Plus, Edit, Trophy, Play, Pause, stop, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { Target, TrendingUp, Calendar, Plus, Edit, Trophy, Play, Pause, Square, Clock, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 interface SubGoal {
   id: string;
@@ -38,6 +39,7 @@ interface Goal {
 }
 
 const Goals = () => {
+  const { toast } = useToast();
   const [goals, setGoals] = useState<Goal[]>([
     { 
       id: '1',
@@ -146,6 +148,94 @@ const Goals = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  const addNewGoal = () => {
+    const newGoal: Goal = {
+      id: Date.now().toString(),
+      title: "New Goal",
+      progress: 0,
+      deadline: "30 days",
+      category: "General",
+      dailyTarget: "Work on goal daily",
+      status: 'on-track',
+      subGoals: [],
+      timerState: {
+        isRunning: false,
+        startTime: null,
+        totalTime: 0,
+        todayTime: 0
+      },
+      sessions: []
+    };
+
+    setGoals(prev => [...prev, newGoal]);
+    toast({
+      title: "Goal Added",
+      description: "New goal has been created successfully!",
+    });
+  };
+
+  const deleteGoal = (goalId: string) => {
+    setGoals(prev => prev.filter(goal => goal.id !== goalId));
+    toast({
+      title: "Goal Deleted",
+      description: "Goal has been removed successfully!",
+    });
+  };
+
+  const deleteSubGoal = (goalId: string, subGoalId: string) => {
+    setGoals(prev => prev.map(goal => {
+      if (goal.id === goalId) {
+        const updatedSubGoals = removeSubGoalFromArray(goal.subGoals, subGoalId);
+        const newProgress = calculateProgress(updatedSubGoals);
+        return { 
+          ...goal, 
+          subGoals: updatedSubGoals,
+          progress: newProgress
+        };
+      }
+      return goal;
+    }));
+    
+    toast({
+      title: "Sub-goal Deleted",
+      description: "Sub-goal has been removed successfully!",
+    });
+  };
+
+  const removeSubGoalFromArray = (subGoals: SubGoal[], targetId: string): SubGoal[] => {
+    return subGoals.filter(subGoal => subGoal.id !== targetId)
+                   .map(subGoal => ({
+                     ...subGoal,
+                     subGoals: removeSubGoalFromArray(subGoal.subGoals, targetId)
+                   }));
+  };
+
+  const editGoalTitle = (goalId: string, newTitle: string) => {
+    setGoals(prev => prev.map(goal => 
+      goal.id === goalId ? { ...goal, title: newTitle } : goal
+    ));
+  };
+
+  const [editingGoal, setEditingGoal] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+
+  const startEditing = (goalId: string, currentTitle: string) => {
+    setEditingGoal(goalId);
+    setEditTitle(currentTitle);
+  };
+
+  const saveEdit = (goalId: string) => {
+    if (editTitle.trim()) {
+      editGoalTitle(goalId, editTitle.trim());
+      toast({
+        title: "Goal Updated",
+        description: "Goal title has been updated successfully!",
+      });
+    }
+    setEditingGoal(null);
+    setEditTitle("");
+  };
 
   const startTimer = (goalId: string) => {
     setGoals(prev => prev.map(goal => 
@@ -325,9 +415,17 @@ const Goals = () => {
             checked={subGoal.completed}
             onCheckedChange={() => toggleSubGoal(goalId, subGoal.id)}
           />
-          <span className={`text-sm ${subGoal.completed ? 'line-through text-gray-500' : ''}`}>
+          <span className={`text-sm flex-1 ${subGoal.completed ? 'line-through text-gray-500' : ''}`}>
             {subGoal.title}
           </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => deleteSubGoal(goalId, subGoal.id)}
+            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
         </div>
         
         {expandedGoals.has(subGoal.id) && subGoal.subGoals.length > 0 && (
@@ -342,11 +440,17 @@ const Goals = () => {
             value={newSubGoal[subGoal.id] || ''}
             onChange={(e) => setNewSubGoal(prev => ({ ...prev, [subGoal.id]: e.target.value }))}
             className="text-xs h-7"
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                addSubGoal(goalId, subGoal.id);
+              }
+            }}
           />
           <Button
             size="sm"
             onClick={() => addSubGoal(goalId, subGoal.id)}
             className="h-7 px-2"
+            disabled={!newSubGoal[subGoal.id]?.trim()}
           >
             <Plus className="h-3 w-3" />
           </Button>
@@ -378,7 +482,10 @@ const Goals = () => {
           </div>
 
           <div className="mb-6">
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button 
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={addNewGoal}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add New Goal
             </Button>
@@ -388,28 +495,49 @@ const Goals = () => {
             {goals.map((goal) => (
               <div key={goal.id} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">{goal.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {goal.deadline}
+                  <div className="flex-1">
+                    {editingGoal === goal.id ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="text-lg font-bold"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              saveEdit(goal.id);
+                            }
+                          }}
+                        />
+                        <Button size="sm" onClick={() => saveEdit(goal.id)}>Save</Button>
+                        <Button size="sm" variant="outline" onClick={() => setEditingGoal(null)}>Cancel</Button>
                       </div>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                        {goal.category}
-                      </span>
-                      <span className={`font-medium ${getStatusColor(goal.status)}`}>
-                        {goal.status.replace('-', ' ')}
-                      </span>
-                    </div>
+                    ) : (
+                      <>
+                        <h3 className="text-lg font-bold text-gray-900">{goal.title}</h3>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            {goal.deadline}
+                          </div>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                            {goal.category}
+                          </span>
+                          <span className={`font-medium ${getStatusColor(goal.status)}`}>
+                            {goal.status.replace('-', ' ')}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <div className={`text-2xl font-bold ${getStatusColor(goal.status)}`}>
-                      {goal.progress}%
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {goal.status === 'ahead' && <Trophy className="h-4 w-4 text-green-500" />}
-                      <TrendingUp className={`h-4 w-4 ${getStatusColor(goal.status)}`} />
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <div className={`text-2xl font-bold ${getStatusColor(goal.status)}`}>
+                        {goal.progress}%
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {goal.status === 'ahead' && <Trophy className="h-4 w-4 text-green-500" />}
+                        <TrendingUp className={`h-4 w-4 ${getStatusColor(goal.status)}`} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -446,7 +574,7 @@ const Goals = () => {
                         onClick={() => stopTimer(goal.id)}
                         variant="outline"
                       >
-                        <stop className="h-3 w-3 mr-1" />
+                        <Square className="h-3 w-3 mr-1" />
                         Stop
                       </Button>
                     </div>
@@ -501,10 +629,16 @@ const Goals = () => {
                           value={newSubGoal[goal.id] || ''}
                           onChange={(e) => setNewSubGoal(prev => ({ ...prev, [goal.id]: e.target.value }))}
                           className="text-sm"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              addSubGoal(goal.id);
+                            }
+                          }}
                         />
                         <Button
                           size="sm"
                           onClick={() => addSubGoal(goal.id)}
+                          disabled={!newSubGoal[goal.id]?.trim()}
                         >
                           <Plus className="h-4 w-4 mr-1" />
                           Add
@@ -514,10 +648,26 @@ const Goals = () => {
                   )}
                 </div>
 
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="ml-auto">
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => startEditing(goal.id, goal.title)}
+                      title="Edit goal title"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => deleteGoal(goal.id)}
+                      className="text-red-500 hover:text-red-700"
+                      title="Delete goal"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
