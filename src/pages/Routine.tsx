@@ -398,8 +398,12 @@ const Routine = () => {
   };
 
   const handleTaskComplete = (taskId: string, quality: number, notes: string, duration: number) => {
+    console.log("[Routine] handleTaskComplete called", { taskId, quality, notes, duration });
     const task = routineItems.find(t => t.id === taskId);
-    if (!task) return;
+    if (!task) {
+      console.warn("[Routine] Tried to complete non-existent task", taskId);
+      return;
+    }
 
     const newStreak = task.streak + 1;
     const completionRecord: CompletionRecord = {
@@ -422,17 +426,21 @@ const Routine = () => {
       // setShowCelebration(false); // do not show celebration for normal tasks
     }
 
-    setRoutineItems(prev => prev.map(item => 
-      item.id === taskId ? { 
-        ...item, 
-        status: 'completed' as const,
-        streak: newStreak,
-        quality,
-        lastCompleted: new Date().toISOString(),
-        completionHistory: [...item.completionHistory, completionRecord],
-        startedAt: undefined
-      } : item
-    ));
+    setRoutineItems(prev => {
+      const updated = prev.map(item => 
+        item.id === taskId ? { 
+          ...item, 
+          status: 'completed' as const,
+          streak: newStreak,
+          quality,
+          lastCompleted: new Date().toISOString(),
+          completionHistory: [...item.completionHistory, completionRecord],
+          startedAt: undefined
+        } : item
+      );
+      console.log("[Routine] Routine items after completion:", updated);
+      return updated;
+    });
   };
 
   const getStreakReward = (streak: number): StreakReward => {
@@ -461,6 +469,7 @@ const Routine = () => {
   };
 
   const handleTaskClick = (task: RoutineItem) => {
+    console.log("[Routine] Task clicked:", task);
     if (task.status === 'current' || task.status === 'in-progress') {
       setSelectedTask(task);
       setIsTaskTrackerOpen(true);
