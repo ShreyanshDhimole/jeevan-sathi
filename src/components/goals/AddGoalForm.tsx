@@ -28,8 +28,15 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
     }
   };
 
+  // NEW: Handle form submit to prevent default
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("AddGoalForm: form submit event");
+    handleAdd();
+  };
+
   return (
-    <div className="mb-6 flex items-center gap-4">
+    <form onSubmit={handleFormSubmit} className="mb-6 flex items-center gap-4">
       <Input
         type="text"
         placeholder="Add a new goal..."
@@ -39,16 +46,16 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
         className="flex-1"
       />
       <Button
+        type="submit"
         onClick={() => {
           console.log("Button Clicked"); // DEBUG
-          handleAdd();
         }}
         className="whitespace-nowrap"
         disabled={inputValue.trim().length === 0}
       >
         Save Goal
       </Button>
-    </div>
+    </form>
   );
 };
 

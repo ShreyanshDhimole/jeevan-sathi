@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/components/ui/sonner";
 import { formatTime } from "@/utils/formatTime";
@@ -22,6 +21,9 @@ export interface Goal {
 }
 
 export function useGoals() {
+  // NEW: Debug mount
+  console.log("useGoals: hook is mounting"); // DEBUG
+
   const [goals, setGoals] = useState<Goal[]>([]);
   const [editingGoal, setEditingGoal] = useState<string | null>(null);
 
