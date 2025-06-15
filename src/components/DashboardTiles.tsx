@@ -144,8 +144,9 @@ export function DashboardTiles({ dashboardConfig }) {
                     </div>
                   </div>
                   <h3 className="text-xl font-bold mb-2">{card.title}</h3>
-                  <div className="text-sm opacity-90 mb-4">
-                    {data.completedDays} of {data.totalDays} days completed
+                  <div className="text-sm opacity-90 mb-2">
+                    {/* Show total time spent */}
+                    Total time spent: <span className="font-semibold">{data.totalTimeSpent}</span>
                   </div>
                   <div className="bg-white/20 rounded-full h-3 mb-2">
                     <div
@@ -153,7 +154,10 @@ export function DashboardTiles({ dashboardConfig }) {
                       style={{ width: `${data.percent}%` }}
                     ></div>
                   </div>
-                  <div className="text-xs opacity-75">{data.daysLeft} days remaining</div>
+                  <div className="text-xs opacity-75">
+                    {/* Show number of items left */}
+                    Items left: <span className="font-bold">{data.incompleteItems}</span>
+                  </div>
                 </div>
               </div>
             );

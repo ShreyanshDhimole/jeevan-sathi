@@ -14,6 +14,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { PointsButton } from "@/components/PointsButton";
 import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
 import { countSubGoals } from "@/utils/goalProgress";
+import { formatTime } from "@/utils/formatTime";
 
 // --- Routine data (Minimal, to demo dynamic) ---
 const ROUTINE_STORAGE_KEY = "user_routine";
@@ -127,21 +128,40 @@ const Index = () => {
 
   // 3. Goal summary (first goal, fallback blank)
   const firstGoal = goals[0];
-  // Use recursive, accurate progress calculation!
   let completedDays = 0;
   let totalDays = 0;
+  let totalTimeSpent = 0;
+  let incompleteItems = 0;
   if (firstGoal) {
     const { total, completed } = countSubGoals(firstGoal.subGoals ?? []);
     completedDays = completed;
     totalDays = total;
+    totalTimeSpent = firstGoal.timerState?.currentTime || 0;
+
+    // Calculate incomplete subgoals recursively
+    function countIncomplete(subGoals) {
+      return subGoals.reduce(
+        (acc, sg) => {
+          const inner = countIncomplete(sg.subGoals ?? []);
+          return acc + (sg.isCompleted ? 0 : 1) + inner;
+        },
+        0
+      );
+    }
+    incompleteItems = countIncomplete(firstGoal.subGoals ?? []);
+    // If the main goal itself is not completed and has subgoals, consider it an additional item left (optional; adjust logic to your preference)
+    // For now: Only count sub-goals, unless you wish to include the root goal as incomplete item.
   }
+
   const percentDone = totalDays === 0 ? 0 : Math.floor((completedDays / totalDays) * 100);
+
+  // New: Show "Total time spent" and "items left" instead of transparent "days completed" and "days remaining"
   const goalSummary = {
     name: firstGoal?.title ?? "",
     percent: percentDone,
-    completedDays,
-    totalDays,
-    daysLeft: totalDays - completedDays,
+    totalTimeSpent: formatTime(totalTimeSpent), // nicely formatted
+    incompleteItems,
+    // completedDays, totalDays, and daysLeft fields are not used anymore for dashboard display
   };
 
   // 4. Rewards - demo via points calculated from tasks/goals etc
@@ -218,9 +238,8 @@ const Index = () => {
       getData: () => ({
         percent: goalSummary.percent,
         statusText: `${goalSummary.percent}%`,
-        completedDays: goalSummary.completedDays,
-        totalDays: goalSummary.totalDays,
-        daysLeft: goalSummary.daysLeft,
+        totalTimeSpent: goalSummary.totalTimeSpent,
+        incompleteItems: goalSummary.incompleteItems,
       }),
     },
     {
