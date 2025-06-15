@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { useToast } from "@/hooks/use-toast";
+import { Toaster, toast } from "@/components/ui/sonner";
 
 // New imports for refactoring:
 import AddGoalForm from "@/components/goals/AddGoalForm";
@@ -23,7 +23,6 @@ interface Goal {
 const Goals = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [editingGoal, setEditingGoal] = useState<string | null>(null);
-  const { toast } = useToast();
 
   // Always sync from localStorage on mount
   useEffect(() => {
@@ -38,14 +37,12 @@ const Goals = () => {
       }
     } catch (error) {
       console.error("Goals: Failed to read from localStorage on mount", error);
-      toast({
-        title: "Could not load goals",
+      toast.error("Could not load goals", {
         description:
           "There was an error reading your goals from storage. Your browser settings might be blocking it.",
-        variant: "destructive",
       });
     }
-  }, [toast]);
+  }, []);
 
   // Always save goals to localStorage when goals change
   useEffect(() => {
@@ -55,56 +52,48 @@ const Goals = () => {
       console.log("Goals: Successfully saved goals to localStorage");
     } catch (error) {
       console.error("Goals: Failed to save to localStorage", error);
-      toast({
-        title: "Could not save goals",
+      toast.error("Could not save goals", {
         description:
           "There was an error saving your goals. Your browser settings might be blocking it.",
-        variant: "destructive",
       });
     }
-  }, [goals, toast]);
+  }, [goals]);
 
   // Add goal handler
-  const handleAddGoal = React.useCallback(
-    (goalTitle: string) => {
-      console.log("Goals: handleAddGoal called with:", goalTitle);
-      // Defensive: avoid empty goal
-      const trimmed = goalTitle.trim();
-      if (!trimmed) return;
-      const newGoalItem: Goal = {
-        id: Date.now().toString(),
-        title: trimmed,
-        progress: 0,
-        subGoals: [],
-        timerState: {
-          isRunning: false,
-          startTime: null,
-          currentTime: 0,
-        },
-      };
-      setGoals((prevGoals) => [...prevGoals, newGoalItem]);
-      console.log("Goals: Attempting to show toast for new goal");
-      try {
-        toast({
-          title: "Goal Added! 🎯",
-          description: `"${trimmed}" has been added to your goals.`,
-        });
-        console.log("Goals: Toast for new goal dispatched successfully");
-      } catch (error) {
-        console.error("Goals: Failed to show toast", error);
-      }
-    },
-    [toast]
-  );
+  const handleAddGoal = React.useCallback((goalTitle: string) => {
+    console.log("Goals: handleAddGoal called with:", goalTitle);
+    // Defensive: avoid empty goal
+    const trimmed = goalTitle.trim();
+    if (!trimmed) return;
+    const newGoalItem: Goal = {
+      id: Date.now().toString(),
+      title: trimmed,
+      progress: 0,
+      subGoals: [],
+      timerState: {
+        isRunning: false,
+        startTime: null,
+        currentTime: 0,
+      },
+    };
+    setGoals((prevGoals) => [...prevGoals, newGoalItem]);
+    console.log("Goals: Attempting to show toast for new goal");
+    try {
+      toast.success("Goal Added! 🎯", {
+        description: `"${trimmed}" has been added to your goals.`,
+      });
+      console.log("Goals: Toast for new goal dispatched successfully");
+    } catch (error) {
+      console.error("Goals: Failed to show toast", error);
+    }
+  }, []);
 
   const deleteGoal = (id: string) => {
     const goalToDelete = goals.find((goal) => goal.id === id);
     setGoals(goals.filter((goal) => goal.id !== id));
     if (goalToDelete) {
-      toast({
-        title: "Goal Deleted",
+      toast.error("Goal Deleted", {
         description: `"${goalToDelete.title}" has been removed.`,
-        variant: "destructive",
       });
     }
   };
@@ -149,8 +138,7 @@ const Goals = () => {
             : goal
         )
       );
-      toast({
-        title: "Sub-goal Added! ✨",
+      toast.success("Sub-goal Added! ✨", {
         description: `"${subGoalTitle}" has been added as a sub-goal.`,
       });
     }
@@ -174,10 +162,8 @@ const Goals = () => {
     );
 
     if (subGoal) {
-      toast({
-        title: "Sub-goal Deleted",
+      toast.error("Sub-goal Deleted", {
         description: `"${subGoal.title}" has been removed.`,
-        variant: "destructive",
       });
     }
   };
@@ -188,8 +174,7 @@ const Goals = () => {
       goals.map((goal) => {
         if (goal.id === goalId) {
           if (goal.timerState.isRunning) {
-            toast({
-              title: "Timer Stopped ⏹️",
+            toast.info("Timer Stopped ⏹️", {
               description: `Timer for "${goal.title}" has been stopped.`,
             });
             return {
@@ -201,8 +186,7 @@ const Goals = () => {
               },
             };
           } else {
-            toast({
-              title: "Timer Started ▶️",
+            toast.info("Timer Started ▶️", {
               description: `Timer for "${goal.title}" is now running.`,
             });
             return {
@@ -249,6 +233,7 @@ const Goals = () => {
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
         <main className="flex-1 flex flex-col items-stretch xl:px-8 px-4 pt-6 bg-transparent">
+          <Toaster />
           <div className="flex items-center gap-4 mb-6">
             <SidebarTrigger />
             <div className="h-8 w-px bg-gray-200"></div>
