@@ -12,7 +12,7 @@ import { RoutineCalendar } from "@/components/RoutineCalendar";
 import { RoutineItem, CompletionRecord, StreakReward } from "@/types/routine";
 import { recalibrateWithUrgentTask } from "@/utils/recalibrationLogic";
 import { useToast } from "@/hooks/use-toast";
-import { Celebration } from "@/components/Celebration"; // NEW
+import { Celebration } from "@/components/Celebration"; // Only for streak reward
 
 const Routine = () => {
   const [routineItems, setRoutineItems] = useState<RoutineItem[]>([
@@ -192,16 +192,16 @@ const Routine = () => {
       pointsEarned: task.points
     };
 
-    // Check for streak rewards
+    // Celebration only for streak rewards
     if (newStreak === 7 || newStreak === 14 || newStreak === 30 || newStreak % 30 === 0) {
       const reward = getStreakReward(newStreak);
       setStreakReward(reward);
       setIsStreakRewardOpen(true);
       setTotalPoints(prev => prev + task.points + reward.bonusPoints);
-      setShowCelebration(true); // celebration for streak reward
+      setShowCelebration(true); // celebration for streak reward only
     } else {
       setTotalPoints(prev => prev + task.points);
-      setShowCelebration(true); // celebration for normal completion
+      // setShowCelebration(false); // do not show celebration for normal tasks
     }
 
     setRoutineItems(prev => prev.map(item => 
@@ -305,7 +305,7 @@ const Routine = () => {
 
   return (
     <SidebarProvider>
-      {/* Celebration confetti (fires when showCelebration true, resets after) */}
+      {/* Celebration confetti (ONLY fires for streaks) */}
       <Celebration
         trigger={showCelebration}
         onDone={() => setShowCelebration(false)}
@@ -321,13 +321,7 @@ const Routine = () => {
               <span className="text-lg font-semibold text-gray-800">Daily Routine</span>
             </div>
             <div className="ml-auto flex items-center gap-4">
-              <button 
-                onClick={() => setIsCalendarOpen(true)}
-                className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
-              >
-                <Calendar className="h-4 w-4" />
-                Calendar
-              </button>
+              {/* Removed Calendar button */}
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-lg">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-4 w-4" />
@@ -362,13 +356,7 @@ const Routine = () => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Today's Schedule</h2>
                 <div className="flex gap-2">
-                  <button 
-                    onClick={() => setIsUrgentTaskOpen(true)}
-                    className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-                  >
-                    <Zap className="h-4 w-4" />
-                    Urgent Task
-                  </button>
+                  {/* REMOVE Urgent Task and Add Task buttons; leave only Add Task */}
                   <button 
                     onClick={() => setIsAddTaskOpen(true)}
                     className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
@@ -414,7 +402,7 @@ const Routine = () => {
                       <div className="text-sm text-gray-500 flex items-center gap-3 mt-1">
                         <span>{item.time}</span>
                         <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
-                          {item.duration}min
+                          {item.duration ? `${item.duration}min` : 'No duration'}
                         </span>
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           item.priority === 'high' ? 'bg-red-100 text-red-700' :
@@ -486,11 +474,7 @@ const Routine = () => {
         onAddTask={addTask}
       />
 
-      <UrgentTaskDialog
-        isOpen={isUrgentTaskOpen}
-        onClose={() => setIsUrgentTaskOpen(false)}
-        onAddUrgentTask={handleUrgentTask}
-      />
+      {/* UrgentTaskDialog and RoutineCalendar REMOVED */}
 
       <RecalibrateDialog
         isOpen={isRecalibrateOpen}
@@ -499,11 +483,10 @@ const Routine = () => {
         upcomingTasks={routineItems.filter(item => item.status === 'upcoming')}
       />
 
-      <RoutineCalendar
-        isOpen={isCalendarOpen}
-        onClose={() => setIsCalendarOpen(false)}
-        routineItems={routineItems}
-      />
+      {/* RoutineCalendar REMOVED */}
+      {/* {isCalendarOpen && */}
+      {/*   <RoutineCalendar ... /> */}
+      {/* } */}
 
       {selectedTask && isTaskTrackerOpen && (
         <TaskTracker
