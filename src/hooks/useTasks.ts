@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 
 export interface Task {
@@ -11,6 +12,7 @@ export interface Task {
   flexible?: boolean;
   points?: number;
   description?: string;
+  completedAt?: string; // <-- Added to support usages in dashboard and stats
 }
 
 export function useTasks() {

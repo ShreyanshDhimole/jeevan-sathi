@@ -36,7 +36,7 @@ const Routine = () => {
     handleTaskComplete,
     updateTask,
     totalPoints,
-    setTotalPoints,
+    // REMOVED setTotalPoints,
     getMissedTasksCount,
     closeTaskTracker,
     closeStreakReward,
