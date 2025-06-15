@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -62,11 +63,23 @@ const Goals = () => {
       };
       setGoals([...goals, newGoalItem]);
       setNewGoal("");
+      toast({
+        title: "Goal Added! 🎯",
+        description: `"${newGoal}" has been added to your goals.`,
+      });
     }
   };
 
   const deleteGoal = (id: string) => {
+    const goalToDelete = goals.find(goal => goal.id === id);
     setGoals(goals.filter((goal) => goal.id !== id));
+    if (goalToDelete) {
+      toast({
+        title: "Goal Deleted",
+        description: `"${goalToDelete.title}" has been removed.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const updateGoal = (id: string, updates: Partial<Goal>) => {
@@ -109,10 +122,17 @@ const Goals = () => {
             : goal
         )
       );
+      toast({
+        title: "Sub-goal Added! ✨",
+        description: `"${subGoalTitle}" has been added as a sub-goal.`,
+      });
     }
   };
 
   const deleteSubGoal = (goalId: string, subGoalId: string) => {
+    const goal = goals.find(g => g.id === goalId);
+    const subGoal = goal?.subGoals.find(sg => sg.id === subGoalId);
+    
     setGoals(
       goals.map((goal) =>
         goal.id === goalId
@@ -125,13 +145,26 @@ const Goals = () => {
           : goal
       )
     );
+    
+    if (subGoal) {
+      toast({
+        title: "Sub-goal Deleted",
+        description: `"${subGoal.title}" has been removed.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleTimer = (goalId: string) => {
+    const goal = goals.find(g => g.id === goalId);
     setGoals(
       goals.map((goal) => {
         if (goal.id === goalId) {
           if (goal.timerState.isRunning) {
+            toast({
+              title: "Timer Stopped ⏹️",
+              description: `Timer for "${goal.title}" has been stopped.`,
+            });
             return {
               ...goal,
               timerState: {
@@ -141,6 +174,10 @@ const Goals = () => {
               },
             };
           } else {
+            toast({
+              title: "Timer Started ▶️",
+              description: `Timer for "${goal.title}" is now running.`,
+            });
             return {
               ...goal,
               timerState: {
@@ -216,6 +253,11 @@ const Goals = () => {
               placeholder="Add a new goal..."
               value={newGoal}
               onChange={(e) => setNewGoal(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  addGoal();
+                }
+              }}
               className="flex-1"
             />
             <Button onClick={addGoal} className="whitespace-nowrap">
@@ -354,13 +396,27 @@ const Goals = () => {
                       type="text"
                       placeholder="Add a sub-goal..."
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && e.target.value.trim() !== "") {
-                          addSubGoal(goal.id, e.target.value);
-                          e.target.value = "";
+                        if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim() !== "") {
+                          addSubGoal(goal.id, (e.target as HTMLInputElement).value);
+                          (e.target as HTMLInputElement).value = "";
                         }
                       }}
                       className="flex-1"
                     />
+                    <Button
+                      onClick={(e) => {
+                        const input = (e.target as HTMLButtonElement).parentElement?.querySelector('input') as HTMLInputElement;
+                        if (input && input.value.trim() !== "") {
+                          addSubGoal(goal.id, input.value);
+                          input.value = "";
+                        }
+                      }}
+                      size="sm"
+                      variant="outline"
+                      title="Add sub-goal"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
