@@ -1,4 +1,3 @@
-
 import { Clock, Target, Gift, TrendingUp, Calendar, CheckCircle2, Star, Zap } from "lucide-react";
 
 // Dynamic import icon map
@@ -27,6 +26,38 @@ export function DashboardTiles({ dashboardConfig }) {
         const data = card.getData();
 
         switch (card.key) {
+          case "points":
+            return (
+              <div
+                key={card.key}
+                className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br ${card.bgClass} p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+                      <CardIcon className="h-7 w-7" />
+                    </div>
+                    <div className="text-sm font-bold bg-white/20 px-4 py-1 rounded-full">
+                      {data.statusText}
+                    </div>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">{card.title}</h3>
+                  <div className="flex flex-col items-center mb-3">
+                    <span className="text-4xl font-extrabold">{data.totalPoints}</span>
+                    <span className="text-xs tracking-wide opacity-70">{data.label}</span>
+                  </div>
+                  <div className="flex flex-col gap-1 mt-4">
+                    <span className="bg-white/20 px-2 py-1 rounded-full text-xs text-white">
+                      Last Earned: +{data.lastPoints}
+                    </span>
+                    <span className="bg-white/20 px-2 py-1 rounded-full text-xs text-white">
+                      Next Reward: {data.nextRewardAt} pts
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
           case "routine":
             return (
               <div

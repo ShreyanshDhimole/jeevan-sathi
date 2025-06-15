@@ -137,6 +137,14 @@ const Index = () => {
     lastPoints: 15,
   };
 
+  // --- Points summary for the Points dashboard tab ---
+  const pointsSummary = {
+    totalPoints: rewardsSummary.totalPoints,
+    lastPoints: rewardsSummary.lastPoints,
+    streak: rewardsSummary.streak,
+    nextRewardAt: rewardsSummary.nextRewardAt,
+  };
+
   // 5. Reminders - mapped into Dashboard format
   const remindersDashboard = reminders
     .filter((r) => r.type === "reminder") // Only reminders, not notes
@@ -156,6 +164,19 @@ const Index = () => {
 
   // NEW: DashboardTile config (titles, ordering, labels, icon, color class, etc)
   const dashboardConfig = [
+    {
+      key: "points",
+      title: "Points",
+      icon: "Star",
+      bgClass: "from-amber-400 via-yellow-500 to-orange-500",
+      getData: () => ({
+        totalPoints: pointsSummary.totalPoints,
+        lastPoints: pointsSummary.lastPoints,
+        nextRewardAt: pointsSummary.nextRewardAt,
+        statusText: `${pointsSummary.totalPoints} pts`,
+        label: "Total Points",
+      }),
+    },
     {
       key: "routine",
       title: "Today's Routine",
