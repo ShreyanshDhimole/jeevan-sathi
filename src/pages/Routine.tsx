@@ -1,550 +1,69 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Clock, Plus, CheckCircle, AlertTriangle, RotateCcw, Star, Play, Trophy, Zap, Calendar, Trash2 } from "lucide-react";
+import { Clock, Plus, Trophy } from "lucide-react";
 import { AddTaskDialog } from "@/components/AddTaskDialog";
 import { RecalibrateDialog } from "@/components/RecalibrateDialog";
-import { UrgentTaskDialog } from "@/components/UrgentTaskDialog";
 import { TaskTracker } from "@/components/TaskTracker";
 import { ReminderSystem } from "@/components/ReminderSystem";
 import { StreakRewards } from "@/components/StreakRewards";
-import { RoutineCalendar } from "@/components/RoutineCalendar";
-import { RoutineItem, CompletionRecord, StreakReward } from "@/types/routine";
-import { recalibrateWithUrgentTask } from "@/utils/recalibrationLogic";
-import { useToast } from "@/hooks/use-toast";
-import { Celebration } from "@/components/Celebration"; // Only for streak reward
-import { useTasks } from "@/hooks/useTasks"; // Import useTasks to unify with Tasks tab
-
-const ROUTINE_STORAGE_KEY = "user_routine";
+import { Celebration } from "@/components/Celebration";
+import RoutineList from "@/components/RoutineList";
+import { useRoutine } from "@/hooks/useRoutine";
 
 const Routine = () => {
-  const { tasks } = useTasks(); // Get user tasks
+  const {
+    routineItems,
+    setRoutineItems,
+    displayRoutineItems,
+    addTask,
+    deleteRoutineItem,
+    isAddTaskOpen,
+    setIsAddTaskOpen,
+    isRecalibrateOpen,
+    setIsRecalibrateOpen,
+    isTaskTrackerOpen,
+    setIsTaskTrackerOpen,
+    selectedTask,
+    setSelectedTask,
+    isStreakRewardOpen,
+    setIsStreakRewardOpen,
+    streakReward,
+    setStreakReward,
+    handleTaskClick,
+    handleTaskStart,
+    handleTaskComplete,
+    updateTask,
+    totalPoints,
+    setTotalPoints,
+    getMissedTasksCount,
+    closeTaskTracker,
+    closeStreakReward,
+    showCelebration,
+    setShowCelebration,
+    triggerAutoRecalibration,
+    updateRoutineStatus,
+  } = useRoutine();
 
-  // --- useEffect to load saved routine from storage on mount ---
-  const [routineItems, setRoutineItems] = useState<RoutineItem[]>([]);
-  useEffect(() => {
-    const stored = localStorage.getItem(ROUTINE_STORAGE_KEY);
-    if (stored) {
-      try {
-        setRoutineItems(JSON.parse(stored));
-      } catch {
-        setRoutineItems([
-          { 
-            id: '1', 
-            time: "6:00 AM", 
-            task: "Naam Jaap", 
-            status: "completed", 
-            priority: "high", 
-            flexible: true,
-            points: 75,
-            streak: 12,
-            quality: 5,
-            completionHistory: [],
-            lastCompleted: new Date().toISOString(),
-            duration: 30,
-            compressible: true,
-            minDuration: 15
-          },
-          { 
-            id: '2', 
-            time: "7:00 AM", 
-            task: "Morning Exercise", 
-            status: "completed", 
-            priority: "medium", 
-            flexible: true,
-            points: 50,
-            streak: 8,
-            completionHistory: [],
-            duration: 45,
-            compressible: true,
-            minDuration: 20
-          },
-          { 
-            id: '3', 
-            time: "8:00 AM", 
-            task: "Breakfast", 
-            status: "current", 
-            priority: "high", 
-            flexible: false,
-            points: 25,
-            streak: 15,
-            completionHistory: [],
-            duration: 30,
-            compressible: false
-          },
-          { 
-            id: '4', 
-            time: "9:00 AM", 
-            task: "Work Focus Time", 
-            status: "upcoming", 
-            priority: "high", 
-            flexible: true,
-            points: 100,
-            streak: 5,
-            completionHistory: [],
-            duration: 90,
-            compressible: true,
-            minDuration: 60,
-            dependsOn: '3'
-          },
-          { 
-            id: '5', 
-            time: "11:00 AM", 
-            task: "Client Meeting", 
-            status: "upcoming", 
-            priority: "high", 
-            flexible: false,
-            points: 150,
-            streak: 0,
-            completionHistory: [],
-            duration: 60,
-            compressible: false
-          },
-        ]);
-      }
-    } else {
-      setRoutineItems([
-        { 
-          id: '1', 
-          time: "6:00 AM", 
-          task: "Naam Jaap", 
-          status: "completed", 
-          priority: "high", 
-          flexible: true,
-          points: 75,
-          streak: 12,
-          quality: 5,
-          completionHistory: [],
-          lastCompleted: new Date().toISOString(),
-          duration: 30,
-          compressible: true,
-          minDuration: 15
-        },
-        { 
-          id: '2', 
-          time: "7:00 AM", 
-          task: "Morning Exercise", 
-          status: "completed", 
-          priority: "medium", 
-          flexible: true,
-          points: 50,
-          streak: 8,
-          completionHistory: [],
-          duration: 45,
-          compressible: true,
-          minDuration: 20
-        },
-        { 
-          id: '3', 
-          time: "8:00 AM", 
-          task: "Breakfast", 
-          status: "current", 
-          priority: "high", 
-          flexible: false,
-          points: 25,
-          streak: 15,
-          completionHistory: [],
-          duration: 30,
-          compressible: false
-        },
-        { 
-          id: '4', 
-          time: "9:00 AM", 
-          task: "Work Focus Time", 
-          status: "upcoming", 
-          priority: "high", 
-          flexible: true,
-          points: 100,
-          streak: 5,
-          completionHistory: [],
-          duration: 90,
-          compressible: true,
-          minDuration: 60,
-          dependsOn: '3'
-        },
-        { 
-          id: '5', 
-          time: "11:00 AM", 
-          task: "Client Meeting", 
-          status: "upcoming", 
-          priority: "high", 
-          flexible: false,
-          points: 150,
-          streak: 0,
-          completionHistory: [],
-          duration: 60,
-          compressible: false
-        },
-      ]);
-    }
-  }, []);
-
-  // NEW: Listen for 'storage' events and also poll every 2 seconds
-  useEffect(() => {
-    function syncRoutineFromStorage() {
-      try {
-        const stored = localStorage.getItem(ROUTINE_STORAGE_KEY);
-        if (stored) {
-          // Only update if different, to avoid unnecessary renders
-          const parsed: RoutineItem[] = JSON.parse(stored);
-          // Compare by length and IDs (shallow, can be improved if needed)
-          if (
-            parsed.length !== routineItems.length ||
-            parsed.some((item, idx) => item.id !== routineItems[idx]?.id)
-          ) {
-            setRoutineItems(parsed);
-          }
-        }
-      } catch (e) {
-        // fail silently
-      }
-    }
-
-    // Listen to storage across tabs
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === ROUTINE_STORAGE_KEY) {
-        syncRoutineFromStorage();
-      }
-    };
-    window.addEventListener("storage", onStorage);
-
-    // Also poll every 2s in case in-tab routine is changed via Dashboard or elsewhere
-    const interval = setInterval(syncRoutineFromStorage, 2000);
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      clearInterval(interval);
-    };
-    // NOTE: including routineItems as dependency, so state keeps sync!
-    // disabling exhaustive deps warning for this tight sync operation
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routineItems]);
-
-  // --- keep routineItems in sync with localStorage ---
-  useEffect(() => {
-    if (routineItems.length > 0) {
-      localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(routineItems));
-    }
-  }, [routineItems]);
-
-  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  const [isRecalibrateOpen, setIsRecalibrateOpen] = useState(false);
-  const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedTask, setSelectedTask] = useState<RoutineItem | null>(null);
-  const [isTaskTrackerOpen, setIsTaskTrackerOpen] = useState(false);
-  const [streakReward, setStreakReward] = useState<StreakReward | null>(null);
-  const [isStreakRewardOpen, setIsStreakRewardOpen] = useState(false);
-  const [totalPoints, setTotalPoints] = useState(1450);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const { toast } = useToast();
 
+  // Set up auto-ticking and recalibration every minute
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
       updateRoutineStatus();
-      triggerAutoRecalibration(); // Run recalibration automatically every minute
+      triggerAutoRecalibration();
     }, 60000);
 
-    // Also run once on mount for synced recalibration
     updateRoutineStatus();
     triggerAutoRecalibration();
 
     return () => clearInterval(timer);
-  }, [tasks, routineItems.length]);
-
-  const updateRoutineStatus = () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-
-    setRoutineItems(prev => prev.map(item => {
-      const [time, period] = item.time.split(' ');
-      const [hour, minute] = time.split(':').map(Number);
-      const itemHour = period === 'PM' && hour !== 12 ? hour + 12 : (period === 'AM' && hour === 12 ? 0 : hour);
-      
-      const itemTime = itemHour * 60 + minute;
-      const nowTime = currentHour * 60 + currentMinute;
-
-      if (item.status === 'upcoming' && nowTime > itemTime + 30) {
-        return { ...item, status: 'missed' as const };
-      }
-      if (item.status === 'upcoming' && nowTime >= itemTime - 15 && nowTime <= itemTime + 15) {
-        return { ...item, status: 'current' as const };
-      }
-      return item;
-    }));
-  };
-
-  const triggerAutoRecalibration = () => {
-    const now = new Date();
-    const allItems = getUnifiedRoutineItems();
-
-    const updated = allItems.map(item => {
-      if (item.status === 'completed') return item;
-      const [time, period] = item.time.split(' ');
-      const [hour, minute] = time.split(':').map(Number);
-      const itemHour = period === 'PM' && hour !== 12 ? hour + 12 : (period === 'AM' && hour === 12 ? 0 : hour);
-      const itemTime = itemHour * 60 + minute;
-      const nowTime = now.getHours() * 60 + now.getMinutes();
-
-      // Auto-miss logic
-      if (item.status === 'upcoming' && nowTime > itemTime + 30) {
-        return { ...item, status: 'missed' as const };
-      }
-      // Auto-current logic (window ±15min)
-      if (item.status === 'upcoming' && nowTime >= itemTime - 15 && nowTime <= itemTime + 15) {
-        return { ...item, status: 'current' as const };
-      }
-      return item;
-    });
-
-    setRoutineItems(updated.filter(i => !i.id.startsWith("tasktab-"))); // Don't writeback taskTabItems
-    // If you want, you can also call any custom rescheduling logic here
-  };
-
-  // For display: Only explicit routine items (NO Tasks tab items!)
-  const getDisplayRoutineItems = () => {
-    return [...routineItems].sort(
-      (a, b) => convertTimeToMinutes(a.time) - convertTimeToMinutes(b.time)
-    );
-  };
-
-  // For recalibration: Routine items + Tasks tab items
-  const getUnifiedRoutineItems = () => {
-    const taskTabItems = tasks
-      .filter((t) => !routineItems.some((r) => r.task === t.task))
-      .map((t) => {
-        // Use only RoutineItem type fields and correct status typing
-        const routineTask: RoutineItem = {
-          id: "tasktab-" + t.id,
-          time: t.preferredTime ?? "6:00 PM",
-          task: t.task,
-          status: t.completed
-            ? "completed"
-            : "upcoming", // must match RoutineItem status type
-          priority: t.priority,
-          flexible: t.flexible ?? true,
-          points: t.points ?? 25,
-          streak: 0,
-          completionHistory: [],
-          duration: t.duration ?? 30,
-          compressible: t.flexible ?? true,
-          minDuration: t.duration
-            ? Math.max(15, Math.floor(t.duration * 0.5))
-            : 15,
-        };
-        return routineTask;
-      });
-    return [...routineItems, ...taskTabItems].sort(
-      (a, b) => convertTimeToMinutes(a.time) - convertTimeToMinutes(b.time)
-    );
-  };
-
-  const addTask = (newTask: {
-    task: string;
-    priority: 'high' | 'medium' | 'low';
-    preferredTime: string;
-    flexible: boolean;
-    points: number;
-    duration: number;
-    // Removed: description
-  }) => {
-    const newId = (routineItems.length + 1).toString();
-    const newRoutineItem: RoutineItem = {
-      id: newId,
-      time: newTask.preferredTime,
-      task: newTask.task,
-      status: 'upcoming',
-      priority: newTask.priority,
-      flexible: newTask.flexible,
-      points: newTask.points,
-      streak: 0,
-      completionHistory: [],
-      duration: newTask.duration ?? 30,
-      compressible: newTask.flexible,
-      minDuration: Math.max(15, Math.floor(newTask.duration * 0.5)),
-      // description removed, it isn't part of RoutineItem type
-    };
-
-    setRoutineItems(prev => [...prev, newRoutineItem].sort((a, b) => {
-      const timeA = convertTimeToMinutes(a.time);
-      const timeB = convertTimeToMinutes(b.time);
-      return timeA - timeB;
-    }));
-
-    toast({
-      title: "Task Added! 📝",
-      description: `"${newTask.task}" has been added to your routine with ${newTask.points} points.`,
-    });
-  };
-
-  const convertTimeToMinutes = (time: string) => {
-    const [timeStr, period] = time.split(' ');
-    const [hour, minute] = timeStr.split(':').map(Number);
-    const hour24 = period === 'PM' && hour !== 12 ? hour + 12 : (period === 'AM' && hour === 12 ? 0 : hour);
-    return hour24 * 60 + minute;
-  };
-
-  const handleTaskStart = (taskId: string) => {
-    setRoutineItems(prev => prev.map(item => 
-      item.id === taskId ? { 
-        ...item, 
-        status: 'in-progress' as const, 
-        startedAt: new Date().toISOString() 
-      } : item
-    ));
-  };
-
-  const handleTaskComplete = (taskId: string, quality: number, notes: string, duration: number) => {
-    console.log("[Routine] handleTaskComplete called", { taskId, quality, notes, duration });
-    const task = routineItems.find(t => t.id === taskId);
-    if (!task) {
-      console.warn("[Routine] Tried to complete non-existent task", taskId);
-      return;
-    }
-
-    const newStreak = task.streak + 1;
-    const completionRecord: CompletionRecord = {
-      date: new Date().toISOString(),
-      quality,
-      duration,
-      notes,
-      pointsEarned: task.points
-    };
-
-    // Celebration only for streak rewards
-    if (newStreak === 7 || newStreak === 14 || newStreak === 30 || newStreak % 30 === 0) {
-      const reward = getStreakReward(newStreak);
-      setStreakReward(reward);
-      setIsStreakRewardOpen(true);
-      setTotalPoints(prev => prev + task.points + reward.bonusPoints);
-      setShowCelebration(true); // celebration for streak reward only
-    } else {
-      setTotalPoints(prev => prev + task.points);
-      // setShowCelebration(false); // do not show celebration for normal tasks
-    }
-
-    setRoutineItems(prev => {
-      const updated = prev.map(item => 
-        item.id === taskId ? { 
-          ...item, 
-          status: 'completed' as const,
-          streak: newStreak,
-          quality,
-          lastCompleted: new Date().toISOString(),
-          completionHistory: [...item.completionHistory, completionRecord],
-          startedAt: undefined
-        } : item
-      );
-      console.log("[Routine] Routine items after completion:", updated);
-      return updated;
-    });
-  };
-
-  const getStreakReward = (streak: number): StreakReward => {
-    if (streak >= 30) {
-      return {
-        streakDays: streak,
-        bonusPoints: 200,
-        title: "Consistency Master!",
-        description: "You've maintained this habit for a month! This is incredible dedication."
-      };
-    } else if (streak >= 14) {
-      return {
-        streakDays: streak,
-        bonusPoints: 100,
-        title: "Habit Champion!",
-        description: "Two weeks of consistency! You're building strong habits."
-      };
-    } else {
-      return {
-        streakDays: streak,
-        bonusPoints: 50,
-        title: "Week Warrior!",
-        description: "One full week of consistency! Great job building this habit."
-      };
-    }
-  };
-
-  const handleTaskClick = (task: RoutineItem) => {
-    console.log("[Routine] Task clicked:", task);
-    if (task.status === 'current' || task.status === 'in-progress') {
-      setSelectedTask(task);
-      setIsTaskTrackerOpen(true);
-    }
-    // Removed the notes modal functionality for routine tasks
-  };
-
-  const updateTask = (taskId: string, updates: Partial<RoutineItem>) => {
-    setRoutineItems(prev => prev.map(item => 
-      item.id === taskId ? { ...item, ...updates } : item
-    ));
-  };
-
-  const handleMissedTask = (task: RoutineItem) => {
-    setTotalPoints(prev => Math.max(0, prev - task.points));
-    toast({
-      title: "Task Missed 😔",
-      description: `You lost ${task.points} points for missing "${task.task}". Don't give up!`,
-      variant: "destructive",
-    });
-  };
-
-  const recalibrateRoutine = () => {
-    const missedTasks = routineItems.filter(item => item.status === 'missed' && item.flexible);
-    const upcomingTasks = routineItems.filter(item => item.status === 'upcoming');
-    
-    // Logic to reschedule missed flexible tasks
-    console.log('Recalibrating routine with missed tasks:', missedTasks);
-    setIsRecalibrateOpen(true);
-  };
-
-  const handleUrgentTask = (taskDescription: string, duration: number) => {
-    const result = recalibrateWithUrgentTask(routineItems, { task: taskDescription, duration }, currentTime);
-    
-    if (result.success) {
-      setRoutineItems(result.adjustedTasks);
-      
-      let toastMessage = result.message;
-      if (result.compressions.length > 0) {
-        const compressedTasks = result.compressions.map(c => 
-          routineItems.find(t => t.id === c.taskId)?.task
-        ).join(', ');
-        toastMessage += ` Compressed: ${compressedTasks}`;
-      }
-      
-      toast({
-        title: "Routine Recalibrated! ⚡",
-        description: toastMessage,
-      });
-    } else {
-      toast({
-        title: "Recalibration Failed 😔",
-        description: result.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getMissedTasksCount = () => routineItems.filter(item => item.status === 'missed').length;
-
-  // New: delete routine item handler with confirmation
-  const deleteRoutineItem = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this routine item? This action cannot be undone.")) {
-      setRoutineItems(prev => prev.filter(item => item.id !== id));
-      toast({
-        title: "Task Deleted",
-        description: "The task was successfully deleted from your routine.",
-        variant: "destructive"
-      });
-    }
-  };
+  }, [routineItems.length, updateRoutineStatus, triggerAutoRecalibration]);
 
   return (
     <SidebarProvider>
-      {/* Celebration confetti (ONLY fires for streaks) */}
       <Celebration
         trigger={showCelebration}
         onDone={() => setShowCelebration(false)}
@@ -560,7 +79,6 @@ const Routine = () => {
               <span className="text-lg font-semibold text-gray-800">Daily Routine</span>
             </div>
             <div className="ml-auto flex items-center gap-4">
-              {/* Removed Calendar button */}
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-lg">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-4 w-4" />
@@ -570,14 +88,11 @@ const Routine = () => {
             </div>
           </div>
 
-          {/* REMOVED the missed tasks recalibration alert and Recalibrate Now button */}
-
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Today's Schedule</h2>
                 <div className="flex gap-2">
-                  {/* REMOVE Urgent Task and Add Task buttons; leave only Add Task */}
                   <button 
                     onClick={() => setIsAddTaskOpen(true)}
                     className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
@@ -587,167 +102,46 @@ const Routine = () => {
                   </button>
                 </div>
               </div>
-              
-              <div className="space-y-3">
-                {/* Only show routineItems, NOT taskTabItems */}
-                {getDisplayRoutineItems().map((item) => (
-                  <div 
-                    key={item.id} 
-                    className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
-                      item.status === 'completed' ? 'bg-green-50 border-green-200' :
-                      item.status === 'current' ? 'bg-blue-50 border-blue-200' :
-                      item.status === 'in-progress' ? 'bg-purple-50 border-purple-200' :
-                      item.status === 'missed' ? 'bg-red-50 border-red-200' :
-                      'bg-gray-50 border-gray-200'
-                    }`}
-                    onClick={() => handleTaskClick(item)}
-                  >
-                    <div className="flex-shrink-0">
-                      {item.status === 'in-progress' ? (
-                        <Play className="h-5 w-5 text-purple-600 animate-pulse" />
-                      ) : (
-                        <CheckCircle className={`h-5 w-5 ${
-                          item.status === 'completed' ? 'text-green-600' :
-                          item.status === 'current' ? 'text-blue-600' :
-                          item.status === 'missed' ? 'text-red-600' :
-                          'text-gray-400'
-                        }`} />
-                      )}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className={`font-medium ${
-                        item.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-900'
-                      }`}>
-                        {item.task}
-                      </div>
-                      <div className="text-sm text-gray-500 flex items-center gap-3 mt-1">
-                        <span>{item.time}</span>
-                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
-                          {item.duration ? `${item.duration}min` : 'No duration'}
-                        </span>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          item.priority === 'high' ? 'bg-red-100 text-red-700' :
-                          item.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
-                        }`}>
-                          {item.priority}
-                        </span>
-                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
-                          {item.points} pts
-                        </span>
-                        {item.streak > 0 && (
-                          <span className="px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded-full flex items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            {item.streak} day streak
-                          </span>
-                        )}
-                        {item.flexible && (
-                          <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">
-                            Flexible
-                          </span>
-                        )}
-                        {item.compressible && (
-                          <span className="px-2 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-full">
-                            Compressible
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {item.status === 'current' && (
-                      <div className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full animate-pulse">
-                        Time to start!
-                      </div>
-                    )}
-                    {item.status === 'in-progress' && (
-                      <div className="px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full">
-                        In Progress
-                      </div>
-                    )}
-                    {item.status === 'missed' && (
-                      <div className="px-3 py-1 bg-red-100 text-red-700 text-sm rounded-full">
-                        Missed
-                      </div>
-                    )}
-                    {typeof item.quality === "number" && (
-                      <div className="flex items-center gap-1">
-                        {[...Array(item.quality)].map((_, i) => (
-                          <Star key={i} className="h-3 w-3 text-yellow-500 fill-current" />
-                        ))}
-                      </div>
-                    )}
-                    {/* Delete button as before */}
-                    <button
-                      className="ml-3 p-2 rounded hover:bg-red-100 transition-all"
-                      onClick={e => {
-                        e.stopPropagation();
-                        deleteRoutineItem(item.id);
-                      }}
-                      aria-label="Delete routine task"
-                    >
-                      <Trash2 className="h-5 w-5 text-red-500" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <RoutineList
+                displayRoutineItems={displayRoutineItems}
+                handleTaskClick={handleTaskClick}
+                deleteRoutineItem={deleteRoutineItem}
+              />
             </div>
           </div>
         </main>
       </div>
-
       <ReminderSystem 
         routineItems={routineItems}
         onUpdateTask={updateTask}
       />
-
       <AddTaskDialog 
         isOpen={isAddTaskOpen} 
         onClose={() => setIsAddTaskOpen(false)}
         onAddTask={addTask}
       />
-
-      {/* UrgentTaskDialog and RoutineCalendar REMOVED */}
-
       <RecalibrateDialog
         isOpen={isRecalibrateOpen}
         onClose={() => setIsRecalibrateOpen(false)}
         missedTasks={routineItems.filter(item => item.status === 'missed')}
         upcomingTasks={routineItems.filter(item => item.status === 'upcoming')}
       />
-
-      {/* RoutineCalendar REMOVED */}
-      {/* {isCalendarOpen && */}
-      {/*   <RoutineCalendar ... /> */}
-      {/* } */}
-
       {selectedTask && isTaskTrackerOpen && (
         <TaskTracker
           task={selectedTask}
           isOpen={isTaskTrackerOpen}
-          onClose={() => {
-            setIsTaskTrackerOpen(false);
-            setSelectedTask(null);
-          }}
+          onClose={closeTaskTracker}
           onComplete={handleTaskComplete}
           onStart={handleTaskStart}
         />
       )}
-
       {streakReward && (
         <StreakRewards
           isOpen={isStreakRewardOpen}
-          onClose={() => {
-            setIsStreakRewardOpen(false);
-            setStreakReward(null);
-          }}
+          onClose={closeStreakReward}
           reward={streakReward}
           onClaim={() => {
-            setShowCelebration(true); // celebration on reward claim
-            toast({
-              title: "Reward Claimed! 🎉",
-              description: `You earned ${streakReward.bonusPoints} bonus points!`,
-            });
+            setShowCelebration(true);
             setIsStreakRewardOpen(false);
             setStreakReward(null);
           }}
