@@ -11,6 +11,7 @@ import { ReminderNoteItem } from '@/types/reminders';
 import { useDayStart } from "@/hooks/useDayStart";
 import { RoutineItem } from "@/types/routine";
 import { useTasks } from "@/hooks/useTasks";
+import { PointsButton } from "@/components/PointsButton";
 
 // --- Routine data (Minimal, to demo dynamic) ---
 const ROUTINE_STORAGE_KEY = "user_routine";
@@ -337,6 +338,12 @@ const Index = () => {
               </button>
             </div>
           </div>
+          
+          {/* Add PointsButton directly below action buttons */}
+          <div className="flex justify-end mb-2">
+            <PointsButton points={pointsSummary.totalPoints} />
+          </div>
+
           <header className="mb-8">
             <div className="flex items-center gap-3 mb-3">
               <h1 className="text-3xl xl:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent">
