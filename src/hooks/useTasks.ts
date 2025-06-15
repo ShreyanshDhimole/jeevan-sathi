@@ -59,7 +59,7 @@ export function useTasks() {
       priority: newTask.priority,
       completed: false,
       starred: false,
-      duration: newTask.duration,
+      duration: newTask.duration ?? 30, // <--- ensure duration is always set
       preferredTime: newTask.preferredTime,
       flexible: newTask.flexible,
       points: newTask.points,

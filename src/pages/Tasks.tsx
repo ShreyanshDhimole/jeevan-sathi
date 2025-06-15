@@ -94,6 +94,9 @@ const Tasks = () => {
                       <div className={`font-medium ${item.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                         {item.task}
                       </div>
+                      {item.duration && (
+                        <div className="text-xs text-gray-500">{item.duration} min</div>
+                      )}
                     </div>
                     <div className={`px-2 py-1 text-xs rounded-full ${
                       item.priority === 'high' ? 'bg-red-100 text-red-700' :

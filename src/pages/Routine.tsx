@@ -171,25 +171,43 @@ const Routine = () => {
 
   const getUnifiedRoutineItems = () => {
     const taskTabItems = tasks
-      .filter((t) => !routineItems.some((r) => r.task === t.task)) // exclude duplicates
-      .map((t) => ({
-        id: "tasktab-" + t.id,
-        time: t.preferredTime ?? "6:00 PM",
-        task: t.task,
-        status: t.completed ? "completed" : "upcoming",
-        priority: t.priority,
-        flexible: t.flexible ?? true,
-        points: t.points ?? 25,
-        streak: 0,
-        completionHistory: [],
-        duration: t.duration ?? 30,
-        compressible: t.flexible ?? true,
-        minDuration: t.duration ? Math.max(15, t.duration * 0.5) : 15,
-      }))
-    return [...routineItems, ...taskTabItems].sort((a, b) => convertTimeToMinutes(a.time) - convertTimeToMinutes(b.time));
+      .filter((t) => !routineItems.some((r) => r.task === t.task))
+      .map((t) => {
+        // Use only RoutineItem type fields and correct status typing
+        const routineTask: RoutineItem = {
+          id: "tasktab-" + t.id,
+          time: t.preferredTime ?? "6:00 PM",
+          task: t.task,
+          status: t.completed
+            ? "completed"
+            : "upcoming", // strictly RoutineItem status
+          priority: t.priority,
+          flexible: t.flexible ?? true,
+          points: t.points ?? 25,
+          streak: 0,
+          completionHistory: [],
+          duration: t.duration ?? 30,
+          compressible: t.flexible ?? true,
+          minDuration: t.duration
+            ? Math.max(15, Math.floor(t.duration * 0.5))
+            : 15,
+        };
+        return routineTask;
+      });
+    return [...routineItems, ...taskTabItems].sort(
+      (a, b) => convertTimeToMinutes(a.time) - convertTimeToMinutes(b.time)
+    );
   };
 
-  const addTask = (newTask: { task: string; priority: 'high' | 'medium' | 'low'; preferredTime: string; flexible: boolean; points: number }) => {
+  const addTask = (newTask: {
+    task: string;
+    priority: 'high' | 'medium' | 'low';
+    preferredTime: string;
+    flexible: boolean;
+    points: number;
+    duration: number;
+    description: string;
+  }) => {
     const newId = (routineItems.length + 1).toString();
     const newRoutineItem: RoutineItem = {
       id: newId,
@@ -201,8 +219,10 @@ const Routine = () => {
       points: newTask.points,
       streak: 0,
       completionHistory: [],
-      duration: 60,
-      compressible: newTask.flexible
+      duration: newTask.duration ?? 30,  // always add duration
+      compressible: newTask.flexible,
+      minDuration: Math.max(15, Math.floor(newTask.duration * 0.5)),
+      description: newTask.description,
     };
 
     setRoutineItems(prev => [...prev, newRoutineItem].sort((a, b) => {
@@ -497,14 +517,14 @@ const Routine = () => {
                         Missed
                       </div>
                     )}
-                    {item.quality && (
+                    {typeof item.quality === "number" && (
                       <div className="flex items-center gap-1">
                         {[...Array(item.quality)].map((_, i) => (
                           <Star key={i} className="h-3 w-3 text-yellow-500 fill-current" />
                         ))}
                       </div>
                     )}
-                    {/* New: Delete button at end, without triggering onClick for task edit */}
+                    {/* Delete button as before */}
                     <button
                       className="ml-3 p-2 rounded hover:bg-red-100 transition-all"
                       onClick={e => {
