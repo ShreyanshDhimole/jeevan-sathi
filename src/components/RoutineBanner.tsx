@@ -1,9 +1,98 @@
 
 import { Clock, ArrowRight } from "lucide-react";
+import { RoutineItem } from "@/types/routine";
 
-export function RoutineBanner({ wakeUpTime }: { wakeUpTime?: string | null }) {
-  // Determine what message to show
-  const isLate = wakeUpTime ? +wakeUpTime.split(":")[0] > 7 : false; // Assume late after 7am
+interface Props {
+  wakeUpTime?: string | null;
+  routineItems: RoutineItem[];
+  suggestedRoutine?: RoutineItem;
+}
+
+/**
+* Fully dynamic banner: messages and labels based on real routine data and wake time.
+* No hardcoded text remains for specific tasks or times.
+*/
+export function RoutineBanner({
+  wakeUpTime,
+  routineItems,
+  suggestedRoutine,
+}: Props) {
+  // Determine the first/main routine (usually earliest/highest priority)
+  const mainRoutine = suggestedRoutine ?? routineItems.slice().sort((a, b) => {
+    const parseTime = (t: string) => {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    };
+    return parseTime(
+      (a.time.match(/\d+:\d+/) || ["00:00"])[0]
+    ) - parseTime(
+      (b.time.match(/\d+:\d+/) || ["00:00"])[0]
+    );
+  })[0];
+
+  // Dynamically calculate late: if actual wakeUpTime is more than 30min after first routine's scheduled time
+  let isLate = false;
+  let deltaMinutes = 0;
+  if (wakeUpTime && mainRoutine?.time) {
+    const parseMinutes = (str: string) => {
+      // Accepts '06:00 AM' or '6:00', '06:00' etc
+      if (str.includes("AM") || str.includes("PM")) {
+        const [time, suffix] = str.split(" ");
+        let [h, m] = time.split(":").map(Number);
+        if (suffix.toLowerCase() === "pm" && h < 12) h += 12;
+        if (suffix.toLowerCase() === "am" && h === 12) h = 0;
+        return h * 60 + m;
+      } else {
+        let [h, m] = str.split(":").map(Number);
+        return h * 60 + m;
+      }
+    };
+    const scheduled = parseMinutes(mainRoutine.time);
+    const actual = parseMinutes(wakeUpTime);
+    deltaMinutes = actual - scheduled;
+    isLate = deltaMinutes > 30;
+  }
+
+  // Dynamic suggested time: earliest task
+  const suggestedTime = mainRoutine?.time || "";
+
+  // Dynamic task name
+  const mainTask = mainRoutine?.task || "your main routine task";
+
+  // Messaging completely dynamic based on actual state
+  let statusLabel = "";
+  let statusClass = "";
+  let subText = "";
+  let suggestion = null;
+
+  if (!wakeUpTime) {
+    statusLabel = "";
+    subText = "Press the button to start the day and calibrate your routine.";
+  } else if (isLate) {
+    statusLabel = "Late start";
+    statusClass = "bg-blue-100 text-blue-700";
+    subText = `You missed "${mainTask}" at the scheduled time.`;
+    suggestion = (
+      <>
+        <span>
+          Do <span className="font-semibold">{mainTask}</span> later if possible, or adjust tomorrow!
+        </span>
+        <ArrowRight className="h-4 w-4" />
+      </>
+    );
+  } else {
+    statusLabel = "On time";
+    statusClass = "bg-green-100 text-green-700";
+    subText = `Let's begin your day with "${mainTask}"!`;
+    suggestion = (
+      <>
+        <span>
+          Keep your streak for <span className="font-semibold">{mainTask}</span>!
+        </span>
+      </>
+    );
+  }
+
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-blue-100/50 mb-6 shadow-lg hover:shadow-xl transition-all duration-300">
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
@@ -20,38 +109,26 @@ export function RoutineBanner({ wakeUpTime }: { wakeUpTime?: string | null }) {
                 ? `You woke up at ${wakeUpTime}`
                 : "Waiting for you to start your day..."}
             </span>
-            {wakeUpTime && (
-              <div className={`px-2 py-1 ${isLate ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} text-xs font-medium rounded-full`}>
-                {isLate ? "Late start" : "On time"}
+            {!!statusLabel && (
+              <div className={`px-2 py-1 ${statusClass} text-xs font-medium rounded-full`}>
+                {statusLabel}
               </div>
             )}
           </div>
           <div className="text-gray-600 mb-2">
-            {wakeUpTime
-              ? isLate
-                ? "Skipping Naam Jaap for now."
-                : "Let's begin your day with Naam Jaap!"
-              : "Press the button to start the day and calibrate your routine."}
+            {subText}
           </div>
           <div className="flex items-center gap-2 text-blue-600 font-semibold">
-            {wakeUpTime ? (
-              isLate ? (
-                <>
-                  <span>Do it in the evening instead</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  <span>Keep up your streak!</span>
-                </>
-              )
-            ) : null}
+            {suggestion}
           </div>
         </div>
+        {/* Suggested time dynamically shown */}
         <div className="hidden sm:block">
           <div className="p-2 bg-white/50 backdrop-blur-sm rounded-xl">
             <div className="text-xs text-gray-500 mb-1">Suggested time</div>
-            <div className="text-sm font-bold text-gray-800">6:00 PM</div>
+            <div className="text-sm font-bold text-gray-800">
+              {suggestedTime}
+            </div>
           </div>
         </div>
       </div>

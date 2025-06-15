@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -9,39 +10,39 @@ import { Calendar, Zap } from "lucide-react";
 import { useGoals } from "@/hooks/useGoals";
 import { ReminderNoteItem } from '@/types/reminders';
 import { useDayStart } from "@/hooks/useDayStart";
+import { RoutineItem } from "@/types/routine";
+
+// --- Routine data (Minimal, to demo dynamic) ---
+const DEMO_ROUTINE_ITEMS: RoutineItem[] = [
+  {
+    id: '1',
+    time: "6:00 AM",
+    task: "Naam Jaap",
+    status: "completed", // Only status: "completed" in stub
+    priority: "high",
+    flexible: true,
+    points: 75,
+    streak: 12,
+    quality: 5,
+    completionHistory: [
+      {
+        date: new Date().toISOString(),
+        quality: 5,
+        duration: 30,
+        notes: "Great focus today, felt very peaceful",
+        pointsEarned: 75,
+      },
+    ],
+    lastCompleted: new Date().toISOString(),
+    duration: 30,
+    compressible: true,
+    minDuration: 15,
+  },
+];
+// --- End routine data ---
 
 const Index = () => {
-  // --- Routine data (Minimal, to demo dynamic) ---
-  // In real app pull from context/hook/store for routine data:
-  const [routineItems] = useState([
-    {
-      id: '1',
-      time: "6:00 AM",
-      task: "Naam Jaap",
-      status: "completed" as const, // Only status: "completed" in stub
-      priority: "high" as const,
-      flexible: true,
-      points: 75,
-      streak: 12,
-      quality: 5,
-      completionHistory: [
-        {
-          date: new Date().toISOString(),
-          quality: 5,
-          duration: 30,
-          notes: "Great focus today, felt very peaceful",
-          pointsEarned: 75,
-        },
-      ],
-      lastCompleted: new Date().toISOString(),
-      duration: 30,
-      compressible: true,
-      minDuration: 15,
-    },
-  ]);
-  // --- End routine data ---
-
-  // Task state (simulate persistent, replace with central store if exists)
+  const [routineItems] = useState<RoutineItem[]>(DEMO_ROUTINE_ITEMS);
   const [tasks, setTasks] = useState([
     { id: '1', task: "Complete project proposal", priority: "high", completed: false, starred: false },
     { id: '2', task: "Call insurance company", priority: "medium", completed: true, starred: false },
@@ -49,10 +50,6 @@ const Index = () => {
     { id: '4', task: "Schedule dentist appointment", priority: "medium", completed: false, starred: false },
     { id: '5', task: "Review team feedback", priority: "high", completed: true, starred: true },
   ]);
-  // For real app, this could come from context, or a query/hook.
-  // --- End tasks state ---
-
-  // Reminders stub, replace with data fetching from reminders/notes context/hook
   const [reminders, setReminders] = useState<ReminderNoteItem[]>([
     {
       id: 'r1',
@@ -75,24 +72,21 @@ const Index = () => {
       createdAt: new Date().toISOString(),
     },
   ]);
-  // --- End reminders stub ---
 
   // Day start (wake up logic)
   const [dayStarted, wakeUpTime, startDay] = useDayStart();
 
   // Goals - dynamic live from hook
-  const {
-    goals,
-  } = useGoals();
+  const { goals } = useGoals();
 
   // Derived dashboard data from modules:
-  // 1. Routine summary calculation (stubbed - replace with dynamic)
-  // Find total + completed. Show current/next.
   const routineTotal = routineItems.length;
   const routineCompleted = routineItems.filter((r) => r.status === 'completed').length;
-  // As routineItems doesn't have current/upcoming in stub, these will always be undefined
-  const current = routineItems.find((r) => r.status === 'current');
-  const next = routineItems.find((r) => r.status === 'upcoming');
+
+  // Use correct type: filter for "current" not from a "completed" static value
+  const current = routineItems.find((r) => r.status === "current");
+  const next = routineItems.find((r) => r.status === "upcoming");
+
   const routineSummary = {
     completed: routineCompleted,
     total: routineTotal,
@@ -147,7 +141,6 @@ const Index = () => {
     improving: true,
   };
 
-  // Dialog states
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
 
@@ -162,12 +155,29 @@ const Index = () => {
     setShowOverlay(!dayStarted && now.getHours() >= 2);
   }, [dayStarted]);
 
+  // For the RoutineBanner, pass today's first routine as "suggested", and main logic for lateness
+  // The RoutineBanner will now use these dynamic routineItems
+  const nextRoutine = routineItems
+    .slice()
+    .sort((a, b) => {
+      const parseTime = (t: string) => {
+        // '6:00 AM' or '18:00'
+        const [time, suffix] = t.split(" ");
+        let [h, m] = time.split(':').map(Number);
+        if (suffix) {
+          if (suffix.toLowerCase() === "pm" && h < 12) h += 12;
+          if (suffix.toLowerCase() === "am" && h === 12) h = 0;
+        }
+        return h * 60 + m;
+      };
+      return parseTime(a.time) - parseTime(b.time);
+    })[0];
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
         <main className="flex-1 flex flex-col items-stretch xl:px-8 px-4 pt-6 bg-transparent">
-          {/* Start-the-day overlay */}
           {showOverlay && (
             <div className="fixed inset-0 z-50 bg-white/90 flex flex-col items-center justify-center">
               <div className="mb-8 text-3xl font-bold text-blue-700 animate-fade-in">Good Morning!</div>
@@ -178,7 +188,7 @@ const Index = () => {
                   setShowOverlay(false);
                 }}
               >
-                Let's Start the Day
+                {"Let's Start the Day"}
               </button>
               <div className="mt-3 text-gray-400 text-sm">Press to calibrate your routine for today</div>
             </div>
@@ -191,7 +201,6 @@ const Index = () => {
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-sm text-gray-600">Live updates active</span>
             </div>
-            {/* Calendar & Urgent Task Buttons */}
             <div className="ml-auto flex items-center gap-3">
               <button 
                 onClick={() => setIsCalendarOpen(true)}
@@ -226,8 +235,11 @@ const Index = () => {
             </div>
           </header>
           
-          <RoutineBanner wakeUpTime={wakeUpTime} />
-          {/* Pass ALL dynamic data */}
+          <RoutineBanner
+            wakeUpTime={wakeUpTime}
+            routineItems={routineItems}
+            suggestedRoutine={nextRoutine}
+          />
           <DashboardTiles 
             routine={routineSummary}
             tasks={taskSummary}
