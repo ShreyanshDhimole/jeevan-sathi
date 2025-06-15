@@ -1,232 +1,26 @@
-import React, { useState, useEffect } from "react";
+
+import React from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Toaster, toast } from "@/components/ui/sonner";
-
-// New imports for refactoring:
+import { Toaster } from "@/components/ui/sonner";
 import AddGoalForm from "@/components/goals/AddGoalForm";
 import GoalList from "@/components/goals/GoalList";
-import { formatTime } from "@/utils/formatTime";
-
-interface Goal {
-  id: string;
-  title: string;
-  progress: number;
-  subGoals: { id: string; title: string; isCompleted: boolean }[];
-  timerState: {
-    isRunning: boolean;
-    startTime: number | null;
-    currentTime: number;
-  };
-}
+import { useGoals } from "@/hooks/useGoals";
 
 const Goals = () => {
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [editingGoal, setEditingGoal] = useState<string | null>(null);
-
-  // Always sync from localStorage on mount
-  useEffect(() => {
-    try {
-      console.log("Goals: Attempting to read from localStorage on mount");
-      const storedGoals = localStorage.getItem("goals");
-      if (storedGoals) {
-        console.log("Goals: Found goals in localStorage");
-        setGoals(JSON.parse(storedGoals));
-      } else {
-        console.log("Goals: No goals found in localStorage on mount");
-      }
-    } catch (error) {
-      console.error("Goals: Failed to read from localStorage on mount", error);
-      toast.error("Could not load goals", {
-        description:
-          "There was an error reading your goals from storage. Your browser settings might be blocking it.",
-      });
-    }
-  }, []);
-
-  // Always save goals to localStorage when goals change
-  useEffect(() => {
-    try {
-      console.log("Goals: useEffect triggered to save goals to localStorage");
-      localStorage.setItem("goals", JSON.stringify(goals));
-      console.log("Goals: Successfully saved goals to localStorage");
-    } catch (error) {
-      console.error("Goals: Failed to save to localStorage", error);
-      toast.error("Could not save goals", {
-        description:
-          "There was an error saving your goals. Your browser settings might be blocking it.",
-      });
-    }
-  }, [goals]);
-
-  // Add goal handler
-  const handleAddGoal = React.useCallback((goalTitle: string) => {
-    console.log("Goals: handleAddGoal called with:", goalTitle);
-    // Defensive: avoid empty goal
-    const trimmed = goalTitle.trim();
-    if (!trimmed) return;
-    const newGoalItem: Goal = {
-      id: Date.now().toString(),
-      title: trimmed,
-      progress: 0,
-      subGoals: [],
-      timerState: {
-        isRunning: false,
-        startTime: null,
-        currentTime: 0,
-      },
-    };
-    setGoals((prevGoals) => [...prevGoals, newGoalItem]);
-    console.log("Goals: Attempting to show toast for new goal");
-    try {
-      toast.success("Goal Added! 🎯", {
-        description: `"${trimmed}" has been added to your goals.`,
-      });
-      console.log("Goals: Toast for new goal dispatched successfully");
-    } catch (error) {
-      console.error("Goals: Failed to show toast", error);
-    }
-  }, []);
-
-  const deleteGoal = (id: string) => {
-    const goalToDelete = goals.find((goal) => goal.id === id);
-    setGoals(goals.filter((goal) => goal.id !== id));
-    if (goalToDelete) {
-      toast.error("Goal Deleted", {
-        description: `"${goalToDelete.title}" has been removed.`,
-      });
-    }
-  };
-
-  const updateGoal = (id: string, updates: Partial<Goal>) => {
-    setGoals((goals) =>
-      goals.map((goal) => (goal.id === id ? { ...goal, ...updates } : goal))
-    );
-  };
-
-  const updateSubGoal = (
-    goalId: string,
-    subGoalId: string,
-    updates: Partial<{ title: string; isCompleted: boolean }>
-  ) => {
-    setGoals(
-      goals.map((goal) => {
-        if (goal.id === goalId) {
-          return {
-            ...goal,
-            subGoals: goal.subGoals.map((subGoal) =>
-              subGoal.id === subGoalId ? { ...subGoal, ...updates } : subGoal
-            ),
-          };
-        }
-        return goal;
-      })
-    );
-  };
-
-  const addSubGoal = (goalId: string, subGoalTitle: string) => {
-    if (subGoalTitle.trim() !== "") {
-      const newSubGoal = {
-        id: Date.now().toString(),
-        title: subGoalTitle,
-        isCompleted: false,
-      };
-      setGoals(
-        goals.map((goal) =>
-          goal.id === goalId
-            ? { ...goal, subGoals: [...goal.subGoals, newSubGoal] }
-            : goal
-        )
-      );
-      toast.success("Sub-goal Added! ✨", {
-        description: `"${subGoalTitle}" has been added as a sub-goal.`,
-      });
-    }
-  };
-
-  const deleteSubGoal = (goalId: string, subGoalId: string) => {
-    const goal = goals.find((g) => g.id === goalId);
-    const subGoal = goal?.subGoals.find((sg) => sg.id === subGoalId);
-
-    setGoals(
-      goals.map((goal) =>
-        goal.id === goalId
-          ? {
-              ...goal,
-              subGoals: goal.subGoals.filter(
-                (subGoal) => subGoal.id !== subGoalId
-              ),
-            }
-          : goal
-      )
-    );
-
-    if (subGoal) {
-      toast.error("Sub-goal Deleted", {
-        description: `"${subGoal.title}" has been removed.`,
-      });
-    }
-  };
-
-  const toggleTimer = (goalId: string) => {
-    const goal = goals.find((g) => g.id === goalId);
-    setGoals(
-      goals.map((goal) => {
-        if (goal.id === goalId) {
-          if (goal.timerState.isRunning) {
-            toast.info("Timer Stopped ⏹️", {
-              description: `Timer for "${goal.title}" has been stopped.`,
-            });
-            return {
-              ...goal,
-              timerState: {
-                ...goal.timerState,
-                isRunning: false,
-                startTime: null,
-              },
-            };
-          } else {
-            toast.info("Timer Started ▶️", {
-              description: `Timer for "${goal.title}" is now running.`,
-            });
-            return {
-              ...goal,
-              timerState: {
-                ...goal.timerState,
-                isRunning: true,
-                startTime: Date.now(),
-              },
-            };
-          }
-        }
-        return goal;
-      })
-    );
-  };
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setGoals((prevGoals) =>
-        prevGoals.map((goal) => {
-          if (goal.timerState.isRunning && goal.timerState.startTime) {
-            const currentTime = Math.floor(
-              (Date.now() - goal.timerState.startTime) / 1000
-            );
-            return {
-              ...goal,
-              timerState: {
-                ...goal.timerState,
-                currentTime: currentTime,
-              },
-            };
-          }
-          return goal;
-        })
-      );
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, []);
+  const {
+    goals,
+    editingGoal,
+    setEditingGoal,
+    handleAddGoal,
+    deleteGoal,
+    updateGoal,
+    updateSubGoal,
+    addSubGoal,
+    deleteSubGoal,
+    toggleTimer,
+    formatTime,
+  } = useGoals();
 
   return (
     <SidebarProvider>
@@ -238,7 +32,6 @@ const Goals = () => {
             <SidebarTrigger />
             <div className="h-8 w-px bg-gray-200"></div>
             <div className="flex items-center gap-2">
-              {/* SVG icon and title */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
