@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
 
 interface AddGoalFormProps {
   onAddGoal: (goalTitle: string) => void;
@@ -12,10 +11,14 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
   const [inputValue, setInputValue] = useState("");
 
   const handleAdd = () => {
+    console.log("AddGoalForm: handleAdd triggered");
     const trimmed = inputValue.trim();
     if (trimmed) {
+      console.log("AddGoalForm: Calling onAddGoal with:", trimmed);
       onAddGoal(trimmed);
       setInputValue("");
+    } else {
+      console.log("AddGoalForm: handleAdd - input was empty");
     }
   };
 
@@ -40,8 +43,7 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
         className="whitespace-nowrap"
         disabled={inputValue.trim().length === 0}
       >
-        <Plus className="h-4 w-4 mr-2" />
-        Add New Goal
+        Save Goal
       </Button>
     </div>
   );

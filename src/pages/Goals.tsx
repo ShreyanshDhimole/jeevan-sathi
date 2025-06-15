@@ -27,20 +27,47 @@ const Goals = () => {
 
   // Always sync from localStorage on mount
   useEffect(() => {
-    const storedGoals = localStorage.getItem("goals");
-    if (storedGoals) {
-      setGoals(JSON.parse(storedGoals));
+    try {
+      console.log("Goals: Attempting to read from localStorage on mount");
+      const storedGoals = localStorage.getItem("goals");
+      if (storedGoals) {
+        console.log("Goals: Found goals in localStorage");
+        setGoals(JSON.parse(storedGoals));
+      } else {
+        console.log("Goals: No goals found in localStorage on mount");
+      }
+    } catch (error) {
+      console.error("Goals: Failed to read from localStorage on mount", error);
+      toast({
+        title: "Could not load goals",
+        description:
+          "There was an error reading your goals from storage. Your browser settings might be blocking it.",
+        variant: "destructive",
+      });
     }
-  }, []);
+  }, [toast]);
 
   // Always save goals to localStorage when goals change
   useEffect(() => {
-    localStorage.setItem("goals", JSON.stringify(goals));
-  }, [goals]);
+    try {
+      console.log("Goals: useEffect triggered to save goals to localStorage");
+      localStorage.setItem("goals", JSON.stringify(goals));
+      console.log("Goals: Successfully saved goals to localStorage");
+    } catch (error) {
+      console.error("Goals: Failed to save to localStorage", error);
+      toast({
+        title: "Could not save goals",
+        description:
+          "There was an error saving your goals. Your browser settings might be blocking it.",
+        variant: "destructive",
+      });
+    }
+  }, [goals, toast]);
 
   // Add goal handler
   const handleAddGoal = React.useCallback(
     (goalTitle: string) => {
+      console.log("Goals: handleAddGoal called with:", goalTitle);
       // Defensive: avoid empty goal
       const trimmed = goalTitle.trim();
       if (!trimmed) return;
@@ -56,10 +83,16 @@ const Goals = () => {
         },
       };
       setGoals((prevGoals) => [...prevGoals, newGoalItem]);
-      toast({
-        title: "Goal Added! 🎯",
-        description: `"${trimmed}" has been added to your goals.`,
-      });
+      console.log("Goals: Attempting to show toast for new goal");
+      try {
+        toast({
+          title: "Goal Added! 🎯",
+          description: `"${trimmed}" has been added to your goals.`,
+        });
+        console.log("Goals: Toast for new goal dispatched successfully");
+      } catch (error) {
+        console.error("Goals: Failed to show toast", error);
+      }
     },
     [toast]
   );
