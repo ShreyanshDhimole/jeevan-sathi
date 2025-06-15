@@ -12,6 +12,7 @@ import { useDayStart } from "@/hooks/useDayStart";
 import { RoutineItem } from "@/types/routine";
 import { useTasks } from "@/hooks/useTasks";
 import { PointsButton } from "@/components/PointsButton";
+import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
 
 // --- Routine data (Minimal, to demo dynamic) ---
 const ROUTINE_STORAGE_KEY = "user_routine";
@@ -90,6 +91,15 @@ const Index = () => {
   // Goals - dynamic live from hook
   const { goals } = useGoals();
 
+  // At top of component:
+  const [points, setPointsState] = React.useState(0);
+
+  React.useEffect(() => {
+    setPointsState(getPoints());
+    const unsubscribe = subscribeToPointsChange(setPointsState);
+    return () => unsubscribe();
+  }, []);
+
   // Derived dashboard data from modules:
   const routineTotal = routineItems.length;
   const routineCompleted = routineItems.filter((r) => r.status === 'completed').length;
@@ -128,19 +138,18 @@ const Index = () => {
   };
 
   // 4. Rewards - demo via points calculated from tasks/goals etc
-  const totalPoints =
-    goals.reduce((acc, g) => acc + g.subGoals.filter(sg => sg.isCompleted).length * 10, 0) +
-    tasks.filter(t => t.completed).length * 5;
+  // In rewardsSummary and pointsSummary use points instead of local calc:
   const rewardsSummary = {
-    totalPoints,
-    streak: 7, // Fake, add actual streak logic later
+    totalPoints: points,
+    streak: 7,
     nextRewardAt: 1500,
     lastPoints: 15,
   };
 
   // --- Points summary for the Points dashboard tab ---
+  // ...and so on...
   const pointsSummary = {
-    totalPoints: rewardsSummary.totalPoints,
+    totalPoints: points,
     lastPoints: rewardsSummary.lastPoints,
     streak: rewardsSummary.streak,
     nextRewardAt: rewardsSummary.nextRewardAt,

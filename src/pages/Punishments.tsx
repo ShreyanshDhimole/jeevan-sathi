@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AlertTriangle, CheckCircle, Plus, Dice6 } from "lucide-react";
@@ -7,9 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { AppSettings, defaultSettings, Punishment } from "@/types/settings";
+import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
 
 const Punishments = () => {
-  const [points, setPoints] = useState(1450);
+  const [points, setPointsState] = React.useState(0); // shared points
+
+  // Sync from localStorage
+  React.useEffect(() => {
+    setPointsState(getPoints());
+    const unsubscribe = subscribeToPointsChange(setPointsState);
+    return () => unsubscribe();
+  }, []);
+
+  const updatePoints = (v: number) => {
+    setPointsState(v);
+    setPoints(v);
+  };
+
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [activePunishments, setActivePunishments] = useState<string[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -33,7 +46,7 @@ const Punishments = () => {
 
   const acceptPunishment = (punishment: Punishment) => {
     if (points >= punishment.cost) {
-      setPoints(prev => prev - punishment.cost);
+      updatePoints(points - punishment.cost);
       setActivePunishments(prev => [...prev, punishment.id]);
       
       toast({
@@ -95,7 +108,7 @@ const Punishments = () => {
 
   const applyRandomPunishment = () => {
     if (points >= randomPoints) {
-      setPoints(prev => prev - randomPoints);
+      updatePoints(points - randomPoints);
       setShowRandomDialog(false);
       toast({
         title: "Random Punishment Applied! 🎲",

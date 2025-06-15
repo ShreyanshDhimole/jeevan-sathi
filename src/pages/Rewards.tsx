@@ -1,14 +1,27 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Gift, Star, Crown, Trophy, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
 
 const Rewards = () => {
-  const [points, setPoints] = useState(1450);
+  const [points, setPointsState] = React.useState(0); // shared points
+
+  // Sync from localStorage
+  React.useEffect(() => {
+    setPointsState(getPoints());
+    const unsubscribe = subscribeToPointsChange(setPointsState);
+    return () => unsubscribe();
+  }, []);
+
+  const updatePoints = (v: number) => {
+    setPointsState(v);
+    setPoints(v);
+  };
+
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newReward, setNewReward] = useState({ reward: "", cost: 100, icon: "🎁" });
   const { toast } = useToast();
@@ -24,7 +37,7 @@ const Rewards = () => {
 
   const claimReward = (reward: typeof rewards[0]) => {
     if (points >= reward.cost) {
-      setPoints(prev => prev - reward.cost);
+      updatePoints(points - reward.cost);
       toast({
         title: "Reward Claimed! 🎉",
         description: `Enjoy your ${reward.reward}! You spent ${reward.cost} points.`,
