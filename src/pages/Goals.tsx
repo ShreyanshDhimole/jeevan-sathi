@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Target, TrendingUp, Calendar, Plus, Edit, Trophy, Play, Pause, Stop, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { Target, TrendingUp, Calendar, Plus, Edit, Trophy, Play, Pause, stop, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -447,7 +446,7 @@ const Goals = () => {
                         onClick={() => stopTimer(goal.id)}
                         variant="outline"
                       >
-                        <Stop className="h-3 w-3 mr-1" />
+                        <stop className="h-3 w-3 mr-1" />
                         Stop
                       </Button>
                     </div>
