@@ -5,10 +5,24 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { CheckSquare, Plus, Star, Trash2 } from "lucide-react";
 import { AddTaskDialog } from "@/components/AddTaskDialog";
 import { useTasks } from "@/hooks/useTasks";
+import { Celebration } from "@/components/Celebration"; // Import Celebration
 
 const Tasks = () => {
   const { tasks, addTask, deleteTask, toggleComplete, toggleStar } = useTasks();
   const [isAddTaskOpen, setIsAddTaskOpen] = React.useState(false);
+
+  // Celebration state for confetti
+  const [showCelebration, setShowCelebration] = React.useState(false);
+
+  // Wrap toggleComplete to fire celebration only when completing a task (not un-completing)
+  const handleToggleComplete = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (task && !task.completed) {
+      // If task is currently not completed, it will become completed
+      setShowCelebration(true);
+    }
+    toggleComplete(id);
+  };
 
   const getTaskStats = () => {
     const total = tasks.length;
@@ -21,6 +35,8 @@ const Tasks = () => {
 
   return (
     <SidebarProvider>
+      {/* Celebration confetti */}
+      <Celebration trigger={showCelebration} onDone={() => setShowCelebration(false)} />
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
         <main className="flex-1 flex flex-col items-stretch xl:px-8 px-4 pt-6 bg-transparent">
@@ -66,7 +82,7 @@ const Tasks = () => {
                   <div key={item.id} className={`flex items-center gap-4 p-3 rounded-lg border ${
                     item.completed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200'
                   }`}>
-                    <button onClick={() => toggleComplete(item.id)}>
+                    <button onClick={() => handleToggleComplete(item.id)}>
                       <input 
                         type="checkbox" 
                         checked={item.completed}
