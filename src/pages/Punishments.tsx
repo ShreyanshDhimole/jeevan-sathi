@@ -2,8 +2,9 @@
 import React, { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Plus, Dice6 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { AppSettings, defaultSettings, Punishment } from "@/types/settings";
 
@@ -11,6 +12,16 @@ const Punishments = () => {
   const [points, setPoints] = useState(1450);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [activePunishments, setActivePunishments] = useState<string[]>([]);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showRandomDialog, setShowRandomDialog] = useState(false);
+  const [randomPoints, setRandomPoints] = useState(50);
+  const [newPunishment, setNewPunishment] = useState({
+    name: "",
+    description: "",
+    severity: "medium" as "light" | "medium" | "severe",
+    cost: 100,
+    icon: "⚡"
+  });
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -45,6 +56,59 @@ const Punishments = () => {
       title: "Punishment Completed! 💪",
       description: `Great job completing "${punishment.name}". You've learned from your mistakes!`,
     });
+  };
+
+  const createCustomPunishment = () => {
+    if (newPunishment.name.trim()) {
+      const customPunishment: Punishment = {
+        id: Date.now().toString(),
+        name: newPunishment.name,
+        description: newPunishment.description,
+        severity: newPunishment.severity,
+        cost: newPunishment.cost,
+        icon: newPunishment.icon
+      };
+      
+      setSettings(prev => ({
+        ...prev,
+        punishments: {
+          ...prev.punishments,
+          availablePunishments: [...prev.punishments.availablePunishments, customPunishment]
+        }
+      }));
+      
+      setNewPunishment({
+        name: "",
+        description: "",
+        severity: "medium",
+        cost: 100,
+        icon: "⚡"
+      });
+      setShowCreateDialog(false);
+      
+      toast({
+        title: "Custom Punishment Created! ⚡",
+        description: `"${customPunishment.name}" added to your punishments list.`,
+      });
+    }
+  };
+
+  const applyRandomPunishment = () => {
+    if (points >= randomPoints) {
+      setPoints(prev => prev - randomPoints);
+      setShowRandomDialog(false);
+      toast({
+        title: "Random Punishment Applied! 🎲",
+        description: `You lost ${randomPoints} points randomly. Sometimes life is unfair!`,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Not enough points! 😅",
+        description: `You need ${randomPoints - points} more points for this random punishment.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const availablePunishments = settings.punishments.availablePunishments.filter(
@@ -99,6 +163,14 @@ const Punishments = () => {
               <span className="text-lg font-semibold text-gray-800">Punishments</span>
             </div>
             <div className="ml-auto flex items-center gap-4">
+              <Button onClick={() => setShowRandomDialog(true)} variant="outline" className="flex items-center gap-2">
+                <Dice6 className="h-4 w-4" />
+                Random Punishment
+              </Button>
+              <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Custom Punishment
+              </Button>
               <div className="bg-gradient-to-r from-red-400 to-red-500 text-white px-4 py-2 rounded-lg">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" />
@@ -200,6 +272,148 @@ const Punishments = () => {
               </ul>
             </div>
           </div>
+
+          {/* Create Custom Punishment Dialog */}
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  Create Custom Punishment
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Punishment Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newPunishment.name}
+                    onChange={(e) => setNewPunishment(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., No dessert, extra exercise..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    value={newPunishment.description}
+                    onChange={(e) => setNewPunishment(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe what this punishment involves..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Severity
+                  </label>
+                  <select
+                    value={newPunishment.severity}
+                    onChange={(e) => setNewPunishment(prev => ({ ...prev, severity: e.target.value as "light" | "medium" | "severe" }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="light">Light</option>
+                    <option value="medium">Medium</option>
+                    <option value="severe">Severe</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Points Cost
+                  </label>
+                  <input
+                    type="number"
+                    value={newPunishment.cost}
+                    onChange={(e) => setNewPunishment(prev => ({ ...prev, cost: Number(e.target.value) }))}
+                    min="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Icon (emoji)
+                  </label>
+                  <input
+                    type="text"
+                    value={newPunishment.icon}
+                    onChange={(e) => setNewPunishment(prev => ({ ...prev, icon: e.target.value }))}
+                    placeholder="⚡"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button onClick={createCustomPunishment} variant="destructive" className="flex-1">
+                    Create Punishment
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Random Punishment Dialog */}
+          <Dialog open={showRandomDialog} onOpenChange={setShowRandomDialog}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Dice6 className="h-5 w-5 text-purple-600" />
+                  Random Punishment
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-gray-600 mb-4">
+                    Sometimes you need to punish yourself randomly. Enter the number of points to lose.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Points to Lose
+                  </label>
+                  <input
+                    type="number"
+                    value={randomPoints}
+                    onChange={(e) => setRandomPoints(Number(e.target.value))}
+                    min="1"
+                    max={points}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    You currently have {points} points
+                  </p>
+                </div>
+
+                <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+                  <p className="text-sm text-red-800">
+                    ⚠️ This action cannot be undone. You will lose {randomPoints} points immediately.
+                  </p>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setShowRandomDialog(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button onClick={applyRandomPunishment} variant="destructive" className="flex-1">
+                    Apply Random Punishment
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     </SidebarProvider>

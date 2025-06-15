@@ -2,21 +2,25 @@
 import React, { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Gift, Star, Crown, Trophy } from "lucide-react";
+import { Gift, Star, Crown, Trophy, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Rewards = () => {
   const [points, setPoints] = useState(1450);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newReward, setNewReward] = useState({ reward: "", cost: 100, icon: "🎁" });
   const { toast } = useToast();
 
-  const rewards = [
+  const [rewards, setRewards] = useState([
     { id: 1, reward: "20 mins Social Media", cost: 100, available: true, icon: "📱" },
     { id: 2, reward: "Order Favorite Snack", cost: 300, available: true, icon: "🍕" },
     { id: 3, reward: "Movie Night", cost: 500, available: true, icon: "🎬" },
     { id: 4, reward: "Shopping Spree", cost: 1000, available: true, icon: "🛍️" },
     { id: 5, reward: "Weekend Trip", cost: 2000, available: false, icon: "✈️" },
     { id: 6, reward: "Spa Day", cost: 1500, available: false, icon: "🧖‍♀️" },
-  ];
+  ]);
 
   const claimReward = (reward: typeof rewards[0]) => {
     if (points >= reward.cost) {
@@ -34,6 +38,25 @@ const Rewards = () => {
     }
   };
 
+  const createCustomReward = () => {
+    if (newReward.reward.trim()) {
+      const customReward = {
+        id: rewards.length + 1,
+        reward: newReward.reward,
+        cost: newReward.cost,
+        available: true,
+        icon: newReward.icon
+      };
+      setRewards(prev => [...prev, customReward]);
+      setNewReward({ reward: "", cost: 100, icon: "🎁" });
+      setShowCreateDialog(false);
+      toast({
+        title: "Custom Reward Created! ✨",
+        description: `"${customReward.reward}" added to your rewards list.`,
+      });
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
@@ -45,6 +68,12 @@ const Rewards = () => {
             <div className="flex items-center gap-2">
               <Gift className="h-5 w-5 text-yellow-600" />
               <span className="text-lg font-semibold text-gray-800">Rewards</span>
+            </div>
+            <div className="ml-auto">
+              <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Custom Reward
+              </Button>
             </div>
           </div>
           
@@ -111,6 +140,67 @@ const Rewards = () => {
               </ul>
             </div>
           </div>
+
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Gift className="h-5 w-5 text-yellow-600" />
+                  Create Custom Reward
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Reward Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newReward.reward}
+                    onChange={(e) => setNewReward(prev => ({ ...prev, reward: e.target.value }))}
+                    placeholder="e.g., Extra gaming time, favorite meal..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Points Cost
+                  </label>
+                  <input
+                    type="number"
+                    value={newReward.cost}
+                    onChange={(e) => setNewReward(prev => ({ ...prev, cost: Number(e.target.value) }))}
+                    min="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Icon (emoji)
+                  </label>
+                  <input
+                    type="text"
+                    value={newReward.icon}
+                    onChange={(e) => setNewReward(prev => ({ ...prev, icon: e.target.value }))}
+                    placeholder="🎁"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button onClick={createCustomReward} className="flex-1">
+                    Create Reward
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     </SidebarProvider>
