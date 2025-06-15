@@ -1,8 +1,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft } from "lucide-react"
-import { navigation } from "lucide-react"
+import { PanelLeft, Navigation } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -280,8 +279,8 @@ const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      {/* Use lucide-react's "navigation" icon */}
-      {React.createElement(navigation, {className: "w-5 h-5"})}
+      {/* Use lucide-react's "Navigation" icon */}
+      {React.createElement(Navigation, {className: "w-5 h-5"})}
       {/* This span is visible on md+ screens but hidden on mobile */}
       <span className="ml-2 font-medium text-base text-gray-700 hidden md:inline">Menu</span>
       <span className="sr-only">Open Navigation Menu</span>
