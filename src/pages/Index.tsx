@@ -166,19 +166,6 @@ const Index = () => {
   // NEW: DashboardTile config (titles, ordering, labels, icon, color class, etc)
   const dashboardConfig = [
     {
-      key: "points",
-      title: "Points",
-      icon: "Star",
-      bgClass: "from-amber-400 via-yellow-500 to-orange-500",
-      getData: () => ({
-        totalPoints: pointsSummary.totalPoints,
-        lastPoints: pointsSummary.lastPoints,
-        nextRewardAt: pointsSummary.nextRewardAt,
-        statusText: `${pointsSummary.totalPoints} pts`,
-        label: "Total Points",
-      }),
-    },
-    {
       key: "routine",
       title: "Today's Routine",
       icon: "Clock",
@@ -339,9 +326,11 @@ const Index = () => {
             </div>
           </div>
           
-          {/* Add PointsButton directly below action buttons */}
+          {/* Show points as simple black text below action buttons */}
           <div className="flex justify-end mb-2">
-            <PointsButton points={pointsSummary.totalPoints} />
+            <span className="text-base font-semibold text-black">
+              Points: {pointsSummary.totalPoints}
+            </span>
           </div>
 
           <header className="mb-8">
