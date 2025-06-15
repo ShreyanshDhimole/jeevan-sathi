@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Clock, Plus, CheckCircle, AlertTriangle, RotateCcw, Star, Play, Trophy, Zap, Calendar } from "lucide-react";
+import { Clock, Plus, CheckCircle, AlertTriangle, RotateCcw, Star, Play, Trophy, Zap, Calendar, Trash2 } from "lucide-react";
 import { AddTaskDialog } from "@/components/AddTaskDialog";
 import { RecalibrateDialog } from "@/components/RecalibrateDialog";
 import { UrgentTaskDialog } from "@/components/UrgentTaskDialog";
@@ -303,6 +303,18 @@ const Routine = () => {
 
   const getMissedTasksCount = () => routineItems.filter(item => item.status === 'missed').length;
 
+  // New: delete routine item handler with confirmation
+  const deleteRoutineItem = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this routine item? This action cannot be undone.")) {
+      setRoutineItems(prev => prev.filter(item => item.id !== id));
+      toast({
+        title: "Task Deleted",
+        description: "The task was successfully deleted from your routine.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <SidebarProvider>
       {/* Celebration confetti (ONLY fires for streaks) */}
@@ -455,6 +467,17 @@ const Routine = () => {
                         ))}
                       </div>
                     )}
+                    {/* New: Delete button at end, without triggering onClick for task edit */}
+                    <button
+                      className="ml-3 p-2 rounded hover:bg-red-100 transition-all"
+                      onClick={e => {
+                        e.stopPropagation();
+                        deleteRoutineItem(item.id);
+                      }}
+                      aria-label="Delete routine task"
+                    >
+                      <Trash2 className="h-5 w-5 text-red-500" />
+                    </button>
                   </div>
                 ))}
               </div>
