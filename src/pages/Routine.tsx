@@ -179,6 +179,47 @@ const Routine = () => {
     }
   }, []);
 
+  // NEW: Listen for 'storage' events and also poll every 2 seconds
+  useEffect(() => {
+    function syncRoutineFromStorage() {
+      try {
+        const stored = localStorage.getItem(ROUTINE_STORAGE_KEY);
+        if (stored) {
+          // Only update if different, to avoid unnecessary renders
+          const parsed: RoutineItem[] = JSON.parse(stored);
+          // Compare by length and IDs (shallow, can be improved if needed)
+          if (
+            parsed.length !== routineItems.length ||
+            parsed.some((item, idx) => item.id !== routineItems[idx]?.id)
+          ) {
+            setRoutineItems(parsed);
+          }
+        }
+      } catch (e) {
+        // fail silently
+      }
+    }
+
+    // Listen to storage across tabs
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === ROUTINE_STORAGE_KEY) {
+        syncRoutineFromStorage();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    // Also poll every 2s in case in-tab routine is changed via Dashboard or elsewhere
+    const interval = setInterval(syncRoutineFromStorage, 2000);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(interval);
+    };
+    // NOTE: including routineItems as dependency, so state keeps sync!
+    // disabling exhaustive deps warning for this tight sync operation
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routineItems]);
+
   // --- keep routineItems in sync with localStorage ---
   useEffect(() => {
     if (routineItems.length > 0) {
