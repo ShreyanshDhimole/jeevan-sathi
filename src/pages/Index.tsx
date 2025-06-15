@@ -15,6 +15,7 @@ import { PointsButton } from "@/components/PointsButton";
 import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
 import { countSubGoals } from "@/utils/goalProgress";
 import { formatTime } from "@/utils/formatTime";
+import { getCompletionCountsByDay } from "@/utils/getCompletionCountsByDay";
 
 // --- Routine data (Minimal, to demo dynamic) ---
 const ROUTINE_STORAGE_KEY = "user_routine";
@@ -49,6 +50,31 @@ const Index = () => {
 
   // Replace separate local tasks state with useTasks hook
   const { tasks } = useTasks();
+
+  // Patch tasks with `completedAt` upon completion (to support weekly stats)
+  React.useEffect(() => {
+    const updatedTasks = tasks.map(t =>
+      t.completed && !t.completedAt
+        ? { ...t, completedAt: new Date().toISOString() }
+        : t
+    );
+    // Only update if any task gets newly completed w/o completedAt
+    if (updatedTasks.some((t, i) => tasks[i] !== t)) {
+      localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+    }
+  }, [tasks]);
+
+  // Patch routineItems with `completedAt` upon completion (to support weekly stats)
+  React.useEffect(() => {
+    const updatedRoutines = routineItems.map(r =>
+      r.status === "completed" && !r.completedAt
+        ? { ...r, completedAt: new Date().toISOString() }
+        : r
+    );
+    if (updatedRoutines.some((r, i) => routineItems[i] !== r)) {
+      localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(updatedRoutines));
+    }
+  }, [routineItems]);
 
   // Reminders: sync with the reminders_notes localStorage key
   const [reminders, setReminders] = useState<ReminderNoteItem[]>([]);
@@ -193,10 +219,20 @@ const Index = () => {
     }));
 
   // 6. Weekly - demo, calculate percent change from previous
+  const weeklyCounts = getCompletionCountsByDay({
+    tasks,
+    routines: routineItems,
+  });
+  const maxCount = Math.max(1, ...weeklyCounts);
+  const weeklyBars = weeklyCounts.map(n => Math.round((n / maxCount) * 95 + 5)); // Minimum visible bar
+  const totalThisWeek = weeklyCounts.reduce((a, b) => a + b, 0);
+  // For percent improvement: compare last 7 vs previous 7 days
+  // We'll just set "improving" if today >= yesterday total for simplicity
+  // (Optional: more advanced stats)
   const weeklyStats = {
-    percent: 12,
-    bars: [40, 60, 45, 80, 65, 90, 75],
-    improving: true,
+    percent: totalThisWeek, // Now using real count
+    bars: weeklyBars,
+    improving: weeklyCounts[6] >= weeklyCounts[5],
   };
 
   // NEW: DashboardTile config (titles, ordering, labels, icon, color class, etc)
@@ -278,7 +314,7 @@ const Index = () => {
         percent: weeklyStats.percent,
         improving: weeklyStats.improving,
         bars: weeklyStats.bars,
-        statusText: weeklyStats.percent > 0 ? `+${weeklyStats.percent}%` : "0%",
+        statusText: `${weeklyStats.percent > 0 ? "+" : ""}${weeklyStats.percent}`,
       }),
     },
   ];
