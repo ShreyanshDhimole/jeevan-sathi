@@ -1,9 +1,24 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Target, TrendingUp, Calendar, Plus, Edit, Trophy } from "lucide-react";
+import { Target, TrendingUp, Calendar, Plus, Edit, Trophy, Play, Pause, Stop, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface SubGoal {
+  id: string;
+  title: string;
+  completed: boolean;
+  subGoals: SubGoal[];
+  createdAt: string;
+}
+
+interface TimerSession {
+  date: string;
+  duration: number; // in minutes
+}
 
 interface Goal {
   id: string;
@@ -13,6 +28,14 @@ interface Goal {
   category: string;
   dailyTarget: string;
   status: 'on-track' | 'behind' | 'ahead';
+  subGoals: SubGoal[];
+  timerState: {
+    isRunning: boolean;
+    startTime: number | null;
+    totalTime: number; // total minutes spent
+    todayTime: number; // minutes spent today
+  };
+  sessions: TimerSession[];
 }
 
 const Goals = () => {
@@ -20,46 +43,316 @@ const Goals = () => {
     { 
       id: '1',
       title: "Learn Python", 
-      progress: 65, 
+      progress: 0, 
       deadline: "30 days", 
       category: "Learning",
       dailyTarget: "Study 1 hour daily",
-      status: 'on-track'
+      status: 'on-track',
+      subGoals: [
+        {
+          id: '1-1',
+          title: "Python Basics",
+          completed: false,
+          subGoals: [
+            { id: '1-1-1', title: "Variables and Data Types", completed: false, subGoals: [], createdAt: new Date().toISOString() },
+            { id: '1-1-2', title: "Control Structures", completed: false, subGoals: [], createdAt: new Date().toISOString() }
+          ],
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '1-2',
+          title: "Data Structures",
+          completed: false,
+          subGoals: [],
+          createdAt: new Date().toISOString()
+        }
+      ],
+      timerState: {
+        isRunning: false,
+        startTime: null,
+        totalTime: 0,
+        todayTime: 0
+      },
+      sessions: []
     },
     { 
       id: '2',
-      title: "Lose 5kg", 
-      progress: 40, 
+      title: "Machine Learning", 
+      progress: 0, 
       deadline: "60 days", 
-      category: "Health",
-      dailyTarget: "Exercise 30 mins + healthy eating",
-      status: 'behind'
-    },
-    { 
-      id: '3',
-      title: "Read 12 books", 
-      progress: 75, 
-      deadline: "365 days", 
-      category: "Personal",
-      dailyTarget: "Read 30 pages daily",
-      status: 'ahead'
-    },
-    { 
-      id: '4',
-      title: "Save $5000", 
-      progress: 25, 
-      deadline: "180 days", 
-      category: "Finance",
-      dailyTarget: "Save $28 daily",
-      status: 'behind'
-    },
+      category: "Learning",
+      dailyTarget: "Study and practice daily",
+      status: 'on-track',
+      subGoals: [
+        {
+          id: '2-1',
+          title: "Mathematics Foundation",
+          completed: false,
+          subGoals: [
+            {
+              id: '2-1-1',
+              title: "Linear Algebra",
+              completed: false,
+              subGoals: [],
+              createdAt: new Date().toISOString()
+            },
+            {
+              id: '2-1-2',
+              title: "Probability & Statistics",
+              completed: false,
+              subGoals: [
+                { id: '2-1-2-1', title: "Basic Probability", completed: false, subGoals: [], createdAt: new Date().toISOString() },
+                { id: '2-1-2-2', title: "Distributions", completed: false, subGoals: [], createdAt: new Date().toISOString() }
+              ],
+              createdAt: new Date().toISOString()
+            }
+          ],
+          createdAt: new Date().toISOString()
+        }
+      ],
+      timerState: {
+        isRunning: false,
+        startTime: null,
+        totalTime: 0,
+        todayTime: 0
+      },
+      sessions: []
+    }
   ]);
 
-  const updateProgress = (id: string, increment: number) => {
+  const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
+  const [newSubGoal, setNewSubGoal] = useState<{ [key: string]: string }>({});
+
+  // Timer effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGoals(prevGoals => 
+        prevGoals.map(goal => {
+          if (goal.timerState.isRunning && goal.timerState.startTime) {
+            const elapsed = Math.floor((Date.now() - goal.timerState.startTime) / 60000);
+            return {
+              ...goal,
+              timerState: {
+                ...goal.timerState,
+                todayTime: goal.timerState.todayTime + elapsed,
+                totalTime: goal.timerState.totalTime + elapsed,
+                startTime: Date.now()
+              }
+            };
+          }
+          return goal;
+        })
+      );
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const startTimer = (goalId: string) => {
     setGoals(prev => prev.map(goal => 
-      goal.id === id 
-        ? { ...goal, progress: Math.min(100, Math.max(0, goal.progress + increment)) }
+      goal.id === goalId 
+        ? { 
+            ...goal, 
+            timerState: { 
+              ...goal.timerState, 
+              isRunning: true, 
+              startTime: Date.now() 
+            } 
+          }
         : goal
+    ));
+  };
+
+  const pauseTimer = (goalId: string) => {
+    setGoals(prev => prev.map(goal => 
+      goal.id === goalId 
+        ? { 
+            ...goal, 
+            timerState: { 
+              ...goal.timerState, 
+              isRunning: false, 
+              startTime: null 
+            } 
+          }
+        : goal
+    ));
+  };
+
+  const stopTimer = (goalId: string) => {
+    setGoals(prev => prev.map(goal => 
+      goal.id === goalId 
+        ? { 
+            ...goal, 
+            timerState: { 
+              ...goal.timerState, 
+              isRunning: false, 
+              startTime: null 
+            },
+            sessions: [
+              ...goal.sessions,
+              {
+                date: new Date().toISOString().split('T')[0],
+                duration: goal.timerState.todayTime
+              }
+            ]
+          }
+        : goal
+    ));
+  };
+
+  const calculateProgress = (subGoals: SubGoal[]): number => {
+    if (subGoals.length === 0) return 0;
+    
+    const totalSubGoals = countAllSubGoals(subGoals);
+    const completedSubGoals = countCompletedSubGoals(subGoals);
+    
+    return totalSubGoals > 0 ? Math.round((completedSubGoals / totalSubGoals) * 100) : 0;
+  };
+
+  const countAllSubGoals = (subGoals: SubGoal[]): number => {
+    return subGoals.reduce((count, subGoal) => {
+      return count + 1 + countAllSubGoals(subGoal.subGoals);
+    }, 0);
+  };
+
+  const countCompletedSubGoals = (subGoals: SubGoal[]): number => {
+    return subGoals.reduce((count, subGoal) => {
+      const currentCount = subGoal.completed ? 1 : 0;
+      return count + currentCount + countCompletedSubGoals(subGoal.subGoals);
+    }, 0);
+  };
+
+  const toggleSubGoal = (goalId: string, subGoalId: string) => {
+    setGoals(prev => prev.map(goal => {
+      if (goal.id === goalId) {
+        const updatedSubGoals = toggleSubGoalInArray(goal.subGoals, subGoalId);
+        const newProgress = calculateProgress(updatedSubGoals);
+        return { 
+          ...goal, 
+          subGoals: updatedSubGoals,
+          progress: newProgress
+        };
+      }
+      return goal;
+    }));
+  };
+
+  const toggleSubGoalInArray = (subGoals: SubGoal[], targetId: string): SubGoal[] => {
+    return subGoals.map(subGoal => {
+      if (subGoal.id === targetId) {
+        return { ...subGoal, completed: !subGoal.completed };
+      }
+      if (subGoal.subGoals.length > 0) {
+        return { ...subGoal, subGoals: toggleSubGoalInArray(subGoal.subGoals, targetId) };
+      }
+      return subGoal;
+    });
+  };
+
+  const addSubGoal = (goalId: string, parentId?: string) => {
+    const title = newSubGoal[parentId || goalId];
+    if (!title?.trim()) return;
+
+    const newSubGoalObj: SubGoal = {
+      id: `${goalId}-${Date.now()}`,
+      title: title.trim(),
+      completed: false,
+      subGoals: [],
+      createdAt: new Date().toISOString()
+    };
+
+    setGoals(prev => prev.map(goal => {
+      if (goal.id === goalId) {
+        if (!parentId) {
+          return { ...goal, subGoals: [...goal.subGoals, newSubGoalObj] };
+        }
+        return { ...goal, subGoals: addSubGoalToArray(goal.subGoals, parentId, newSubGoalObj) };
+      }
+      return goal;
+    }));
+
+    setNewSubGoal(prev => ({ ...prev, [parentId || goalId]: '' }));
+  };
+
+  const addSubGoalToArray = (subGoals: SubGoal[], parentId: string, newSubGoal: SubGoal): SubGoal[] => {
+    return subGoals.map(subGoal => {
+      if (subGoal.id === parentId) {
+        return { ...subGoal, subGoals: [...subGoal.subGoals, newSubGoal] };
+      }
+      if (subGoal.subGoals.length > 0) {
+        return { ...subGoal, subGoals: addSubGoalToArray(subGoal.subGoals, parentId, newSubGoal) };
+      }
+      return subGoal;
+    });
+  };
+
+  const toggleExpanded = (id: string) => {
+    setExpandedGoals(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  const renderSubGoals = (subGoals: SubGoal[], goalId: string, level = 0) => {
+    return subGoals.map(subGoal => (
+      <div key={subGoal.id} className={`ml-${level * 4} border-l-2 border-gray-200 pl-4 mb-2`}>
+        <div className="flex items-center gap-2 mb-2">
+          {subGoal.subGoals.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-0 h-4 w-4"
+              onClick={() => toggleExpanded(subGoal.id)}
+            >
+              {expandedGoals.has(subGoal.id) ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+            </Button>
+          )}
+          <Checkbox
+            checked={subGoal.completed}
+            onCheckedChange={() => toggleSubGoal(goalId, subGoal.id)}
+          />
+          <span className={`text-sm ${subGoal.completed ? 'line-through text-gray-500' : ''}`}>
+            {subGoal.title}
+          </span>
+        </div>
+        
+        {expandedGoals.has(subGoal.id) && subGoal.subGoals.length > 0 && (
+          <div className="ml-4">
+            {renderSubGoals(subGoal.subGoals, goalId, level + 1)}
+          </div>
+        )}
+        
+        <div className="flex items-center gap-2 ml-6 mb-2">
+          <Input
+            placeholder="Add sub-goal..."
+            value={newSubGoal[subGoal.id] || ''}
+            onChange={(e) => setNewSubGoal(prev => ({ ...prev, [subGoal.id]: e.target.value }))}
+            className="text-xs h-7"
+          />
+          <Button
+            size="sm"
+            onClick={() => addSubGoal(goalId, subGoal.id)}
+            className="h-7 px-2"
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
     ));
   };
 
@@ -69,16 +362,6 @@ const Goals = () => {
       case 'behind': return 'text-red-600';
       default: return 'text-blue-600';
     }
-  };
-
-  const getRecommendation = (goal: Goal) => {
-    if (goal.status === 'behind') {
-      const catchUpEffort = Math.ceil((100 - goal.progress) / parseInt(goal.deadline) * 1.5);
-      return `⚡ You're behind! Increase effort by ${catchUpEffort}% to catch up.`;
-    } else if (goal.status === 'ahead') {
-      return `🎉 Great job! You're ahead of schedule. Keep the momentum!`;
-    }
-    return `✅ On track! Continue with your ${goal.dailyTarget}`;
   };
 
   return (
@@ -102,7 +385,7 @@ const Goals = () => {
             </Button>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
             {goals.map((goal) => (
               <div key={goal.id} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
@@ -132,6 +415,53 @@ const Goals = () => {
                   </div>
                 </div>
 
+                {/* Timer Section */}
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-gray-600" />
+                      <span className="text-sm font-medium">Time Tracking</span>
+                    </div>
+                    <div className="flex gap-2">
+                      {!goal.timerState.isRunning ? (
+                        <Button
+                          size="sm"
+                          onClick={() => startTimer(goal.id)}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Play className="h-3 w-3 mr-1" />
+                          Start
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => pauseTimer(goal.id)}
+                          className="bg-yellow-600 hover:bg-yellow-700"
+                        >
+                          <Pause className="h-3 w-3 mr-1" />
+                          Pause
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => stopTimer(goal.id)}
+                        variant="outline"
+                      >
+                        <Stop className="h-3 w-3 mr-1" />
+                        Stop
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Today: {formatTime(goal.timerState.todayTime)}</span>
+                    <span>Total: {formatTime(goal.timerState.totalTime)}</span>
+                  </div>
+                  {goal.timerState.isRunning && (
+                    <div className="mt-1 text-xs text-green-600 font-medium">Timer Running...</div>
+                  )}
+                </div>
+
+                {/* Progress Bar */}
                 <div className="mb-4">
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
@@ -145,35 +475,47 @@ const Goals = () => {
                   </div>
                 </div>
 
+                {/* Sub-goals Section */}
                 <div className="mb-4">
-                  <div className="text-sm font-medium text-gray-700 mb-1">Daily Target:</div>
-                  <div className="text-sm text-gray-600 mb-2">{goal.dailyTarget}</div>
-                  <div className={`text-sm p-2 rounded-lg ${
-                    goal.status === 'ahead' ? 'bg-green-50 text-green-800' :
-                    goal.status === 'behind' ? 'bg-red-50 text-red-800' :
-                    'bg-blue-50 text-blue-800'
-                  }`}>
-                    {getRecommendation(goal)}
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-gray-700">Sub-goals</h4>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleExpanded(goal.id)}
+                    >
+                      {expandedGoals.has(goal.id) ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
+                  
+                  {expandedGoals.has(goal.id) && (
+                    <div className="space-y-2">
+                      {renderSubGoals(goal.subGoals, goal.id)}
+                      
+                      <div className="flex items-center gap-2 mt-3">
+                        <Input
+                          placeholder="Add new sub-goal..."
+                          value={newSubGoal[goal.id] || ''}
+                          onChange={(e) => setNewSubGoal(prev => ({ ...prev, [goal.id]: e.target.value }))}
+                          className="text-sm"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => addSubGoal(goal.id)}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => updateProgress(goal.id, -5)}
-                    disabled={goal.progress <= 0}
-                  >
-                    -5%
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => updateProgress(goal.id, 5)}
-                    disabled={goal.progress >= 100}
-                  >
-                    +5%
-                  </Button>
                   <Button variant="outline" size="sm" className="ml-auto">
                     <Edit className="h-4 w-4" />
                   </Button>
