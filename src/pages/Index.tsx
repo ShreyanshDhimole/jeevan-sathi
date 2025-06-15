@@ -1,13 +1,30 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React from "react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { DashboardTiles } from "@/components/DashboardTiles";
+import { RoutineBanner } from "@/components/RoutineBanner";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar />
+        <main className="flex-1 flex flex-col items-stretch xl:px-16 px-2 pt-8 bg-background">
+          <SidebarTrigger />
+          <header className="mb-6">
+            <h1 className="text-3xl xl:text-4xl font-bold tracking-tight flex items-center gap-4">
+              Jeevan Sathi <span className="text-xl text-muted-foreground font-light">– Your Intelligent Daily Companion</span>
+            </h1>
+            <div className="mt-3 text-base xl:text-lg text-muted-foreground">
+              Master your day with adaptive routines, smart reminders, and motivational rewards.
+            </div>
+          </header>
+          <RoutineBanner />
+          <DashboardTiles />
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
