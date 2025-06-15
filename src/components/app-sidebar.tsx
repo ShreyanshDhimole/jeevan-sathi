@@ -1,104 +1,80 @@
-
+import React from "react";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { LayoutDashboard, Clock, CheckSquare, Target, Gift, TrendingUp, Sparkles } from "lucide-react";
-import { useLocation } from "react-router-dom";
-
-const items = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Routine",
-    url: "/routine",
-    icon: Clock,
-  },
-  {
-    title: "Tasks",
-    url: "/tasks",
-    icon: CheckSquare,
-  },
-  {
-    title: "Goals",
-    url: "/goals",
-    icon: Target,
-  },
-  {
-    title: "Rewards",
-    url: "/rewards",
-    icon: Gift,
-  },
-  {
-    title: "Insights",
-    url: "/insights",
-    icon: TrendingUp,
-  },
-];
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import {
+  Home,
+  Calendar,
+  Clock,
+  CheckSquare,
+  List,
+  Settings,
+  BarChart,
+  Target,
+  Gift,
+  AlertTriangle,
+} from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AppSidebar() {
   const location = useLocation();
-  
+
+  const menuItems = [
+    { title: "Dashboard", url: "/", icon: Home },
+    { title: "Daily Routine", url: "/routine", icon: Clock },
+    { title: "Tasks", url: "/tasks", icon: CheckSquare },
+    { title: "Goals", url: "/goals", icon: Target },
+    { title: "Rewards", url: "/rewards", icon: Gift },
+    { title: "Punishments", url: "/punishments", icon: AlertTriangle },
+    { title: "Insights", url: "/insights", icon: BarChart },
+    { title: "Settings", url: "/settings", icon: Settings },
+  ];
+
   return (
-    <Sidebar className="border-r border-gray-200/50">
-      <SidebarContent className="bg-gradient-to-b from-white to-gray-50/50">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <div className="p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-              <Sparkles className="h-4 w-4 text-white" />
-            </div>
-            Jeevan Sathi
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {items.map((item) => {
-                const isActive = location.pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      asChild 
-                      isActive={isActive}
-                      className="group relative rounded-xl transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 data-[active=true]:bg-gradient-to-r data-[active=true]:from-blue-500 data-[active=true]:to-purple-600 data-[active=true]:text-white data-[active=true]:shadow-lg"
-                    >
-                      <a
-                        href={item.url}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors"
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span className="font-medium">{item.title}</span>
-                        {isActive && (
-                          <div className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                        )}
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="p-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-200/50">
-            <div className="text-xs text-gray-600 mb-1">Today's Progress</div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-gray-200 rounded-full h-2">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full w-3/4"></div>
-              </div>
-              <span className="text-xs font-medium text-gray-700">75%</span>
-            </div>
-          </div>
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="sm" className="p-0">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarFallback>SC</AvatarFallback>
+          </Avatar>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-64 p-0">
+        <SheetHeader className="px-6 pb-4 pt-6">
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>
+            Navigate through your productivity tools.
+          </SheetDescription>
+        </SheetHeader>
+        <Separator />
+        <div className="flex flex-col gap-2 py-4">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.title}
+              to={item.url}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-6 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "text-foreground"
+                }`
+              }
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.title}</span>
+            </NavLink>
+          ))}
         </div>
-      </SidebarContent>
-    </Sidebar>
+      </SheetContent>
+    </Sheet>
   );
 }

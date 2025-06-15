@@ -1,8 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RoutineItem } from '@/types/routine';
-import { Bell, Zap, AlertTriangle } from 'lucide-react';
+import { AppSettings, defaultSettings } from '@/types/settings';
 
 interface ReminderSystemProps {
   routineItems: RoutineItem[];
@@ -11,8 +11,18 @@ interface ReminderSystemProps {
 
 export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemProps) => {
   const { toast } = useToast();
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
 
   useEffect(() => {
+    const saved = localStorage.getItem('appSettings');
+    if (saved) {
+      setSettings(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!settings.reminders.enableReminders) return;
+
     const checkReminders = () => {
       const now = new Date();
       const currentTime = now.getHours() * 60 + now.getMinutes();
@@ -24,11 +34,11 @@ export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemPro
           const taskHour = period === 'PM' && hour !== 12 ? hour + 12 : (period === 'AM' && hour === 12 ? 0 : hour);
           const taskTime = taskHour * 60 + minute;
 
-          // Send reminder 15 minutes before
-          if (currentTime >= taskTime - 15 && currentTime < taskTime) {
+          // Send reminder before task
+          if (currentTime >= taskTime - settings.reminders.preTaskMinutes && currentTime < taskTime) {
             toast({
               title: "Upcoming Task! ⏰",
-              description: `"${task.task}" starts in 15 minutes. Get ready!`,
+              description: `"${task.task}" starts in ${settings.reminders.preTaskMinutes} minutes. Get ready!`,
               duration: 8000,
             });
             onUpdateTask(task.id, { reminderSent: true });
@@ -43,25 +53,25 @@ export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemPro
             });
           }
 
-          // Send nudge for overdue tasks
-          if (currentTime > taskTime + 10 && task.status === 'upcoming') {
+          // Send configurable overdue reminder
+          if (currentTime > taskTime + settings.reminders.overdueMinutes && task.status === 'upcoming') {
             toast({
-              title: "Don't Give Up! 💪",
-              description: `"${task.task}" is overdue. You can still do it!`,
+              title: "Task Overdue ⏱️",
+              description: `"${task.task}" is overdue. You can still complete it!`,
               duration: 12000,
             });
           }
         }
 
-        // Motivational nudges for in-progress tasks
+        // Motivational nudges for in-progress tasks (configurable timing)
         if (task.status === 'in-progress' && task.startedAt) {
           const startTime = new Date(task.startedAt);
           const elapsed = (now.getTime() - startTime.getTime()) / (1000 * 60); // minutes
           
-          if (elapsed === 10) {
+          if (Math.floor(elapsed) === settings.reminders.motivationalNudgeMinutes) {
             toast({
               title: "Keep Going! 🔥",
-              description: `You've been at "${task.task}" for 10 minutes. Stay focused!`,
+              description: `You've been at "${task.task}" for ${settings.reminders.motivationalNudgeMinutes} minutes. Stay focused!`,
               duration: 6000,
             });
           }
@@ -73,7 +83,7 @@ export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemPro
     checkReminders(); // Check immediately
 
     return () => clearInterval(interval);
-  }, [routineItems, toast, onUpdateTask]);
+  }, [routineItems, toast, onUpdateTask, settings.reminders]);
 
   return null; // This component doesn't render anything
 };
