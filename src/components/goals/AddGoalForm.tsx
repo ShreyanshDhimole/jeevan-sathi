@@ -11,42 +11,39 @@ interface AddGoalFormProps {
 const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
   const [inputValue, setInputValue] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    console.log("Form submitted with value:", inputValue);
-    e.preventDefault();
+  const handleAdd = () => {
     const trimmed = inputValue.trim();
-    console.log("Trimmed value:", trimmed);
-    if (trimmed !== "") {
-      console.log("Calling onAddGoal with:", trimmed);
+    if (trimmed) {
       onAddGoal(trimmed);
       setInputValue("");
-      console.log("Input cleared");
-    } else {
-      console.log("Input is empty, not adding goal");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleAdd();
     }
   };
 
   return (
-    <form className="mb-6 flex items-center gap-4" onSubmit={handleSubmit}>
+    <div className="mb-6 flex items-center gap-4">
       <Input
         type="text"
         placeholder="Add a new goal..."
         value={inputValue}
-        onChange={(e) => {
-          console.log("Input changed to:", e.target.value);
-          setInputValue(e.target.value);
-        }}
+        onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={handleKeyDown}
         className="flex-1"
       />
       <Button
-        type="submit"
+        onClick={handleAdd}
         className="whitespace-nowrap"
         disabled={inputValue.trim().length === 0}
       >
         <Plus className="h-4 w-4 mr-2" />
         Add New Goal
       </Button>
-    </form>
+    </div>
   );
 };
 
