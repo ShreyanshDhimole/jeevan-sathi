@@ -13,38 +13,34 @@ import { RoutineItem } from "@/types/routine";
 import { useTasks } from "@/hooks/useTasks";
 
 // --- Routine data (Minimal, to demo dynamic) ---
-const DEMO_ROUTINE_ITEMS: RoutineItem[] = [
-  {
-    id: '1',
-    time: "6:00 AM",
-    task: "Naam Jaap",
-    status: "completed", // Only status: "completed" in stub
-    priority: "high",
-    flexible: true,
-    points: 75,
-    streak: 12,
-    quality: 5,
-    completionHistory: [
-      {
-        date: new Date().toISOString(),
-        quality: 5,
-        duration: 30,
-        notes: "Great focus today, felt very peaceful",
-        pointsEarned: 75,
-      },
-    ],
-    lastCompleted: new Date().toISOString(),
-    duration: 30,
-    compressible: true,
-    minDuration: 15,
-  },
-];
-// --- End routine data ---
-
-const REMINDER_STORAGE_KEY = "reminders_notes";
+const ROUTINE_STORAGE_KEY = "user_routine";
 
 const Index = () => {
-  const [routineItems] = useState<RoutineItem[]>(DEMO_ROUTINE_ITEMS);
+  const [routineItems, setRoutineItems] = useState<RoutineItem[]>([]);
+
+  // Load routine from localStorage and listen to changes
+  useEffect(() => {
+    const loadRoutine = () => {
+      const stored = localStorage.getItem(ROUTINE_STORAGE_KEY);
+      if (stored) {
+        try {
+          setRoutineItems(JSON.parse(stored));
+        } catch {
+          setRoutineItems([]);
+        }
+      } else {
+        setRoutineItems([]);
+      }
+    };
+    loadRoutine();
+    window.addEventListener('storage', loadRoutine);
+    // fallback interval for local routines from same tab
+    const interval = setInterval(loadRoutine, 2000); 
+    return () => {
+      window.removeEventListener('storage', loadRoutine);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Replace separate local tasks state with useTasks hook
   const { tasks } = useTasks();

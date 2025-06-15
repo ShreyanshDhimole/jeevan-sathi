@@ -15,82 +15,176 @@ import { useToast } from "@/hooks/use-toast";
 import { Celebration } from "@/components/Celebration"; // Only for streak reward
 import { useTasks } from "@/hooks/useTasks"; // Import useTasks to unify with Tasks tab
 
+const ROUTINE_STORAGE_KEY = "user_routine";
+
 const Routine = () => {
   const { tasks } = useTasks(); // Get user tasks
 
-  const [routineItems, setRoutineItems] = useState<RoutineItem[]>([
-    { 
-      id: '1', 
-      time: "6:00 AM", 
-      task: "Naam Jaap", 
-      status: "completed", 
-      priority: "high", 
-      flexible: true,
-      points: 75,
-      streak: 12,
-      quality: 5,
-      completionHistory: [],
-      lastCompleted: new Date().toISOString(),
-      duration: 30,
-      compressible: true,
-      minDuration: 15
-    },
-    { 
-      id: '2', 
-      time: "7:00 AM", 
-      task: "Morning Exercise", 
-      status: "completed", 
-      priority: "medium", 
-      flexible: true,
-      points: 50,
-      streak: 8,
-      completionHistory: [],
-      duration: 45,
-      compressible: true,
-      minDuration: 20
-    },
-    { 
-      id: '3', 
-      time: "8:00 AM", 
-      task: "Breakfast", 
-      status: "current", 
-      priority: "high", 
-      flexible: false,
-      points: 25,
-      streak: 15,
-      completionHistory: [],
-      duration: 30,
-      compressible: false
-    },
-    { 
-      id: '4', 
-      time: "9:00 AM", 
-      task: "Work Focus Time", 
-      status: "upcoming", 
-      priority: "high", 
-      flexible: true,
-      points: 100,
-      streak: 5,
-      completionHistory: [],
-      duration: 90,
-      compressible: true,
-      minDuration: 60,
-      dependsOn: '3'
-    },
-    { 
-      id: '5', 
-      time: "11:00 AM", 
-      task: "Client Meeting", 
-      status: "upcoming", 
-      priority: "high", 
-      flexible: false,
-      points: 150,
-      streak: 0,
-      completionHistory: [],
-      duration: 60,
-      compressible: false
-    },
-  ]);
+  // --- useEffect to load saved routine from storage on mount ---
+  const [routineItems, setRoutineItems] = useState<RoutineItem[]>([]);
+  useEffect(() => {
+    const stored = localStorage.getItem(ROUTINE_STORAGE_KEY);
+    if (stored) {
+      try {
+        setRoutineItems(JSON.parse(stored));
+      } catch {
+        setRoutineItems([
+          { 
+            id: '1', 
+            time: "6:00 AM", 
+            task: "Naam Jaap", 
+            status: "completed", 
+            priority: "high", 
+            flexible: true,
+            points: 75,
+            streak: 12,
+            quality: 5,
+            completionHistory: [],
+            lastCompleted: new Date().toISOString(),
+            duration: 30,
+            compressible: true,
+            minDuration: 15
+          },
+          { 
+            id: '2', 
+            time: "7:00 AM", 
+            task: "Morning Exercise", 
+            status: "completed", 
+            priority: "medium", 
+            flexible: true,
+            points: 50,
+            streak: 8,
+            completionHistory: [],
+            duration: 45,
+            compressible: true,
+            minDuration: 20
+          },
+          { 
+            id: '3', 
+            time: "8:00 AM", 
+            task: "Breakfast", 
+            status: "current", 
+            priority: "high", 
+            flexible: false,
+            points: 25,
+            streak: 15,
+            completionHistory: [],
+            duration: 30,
+            compressible: false
+          },
+          { 
+            id: '4', 
+            time: "9:00 AM", 
+            task: "Work Focus Time", 
+            status: "upcoming", 
+            priority: "high", 
+            flexible: true,
+            points: 100,
+            streak: 5,
+            completionHistory: [],
+            duration: 90,
+            compressible: true,
+            minDuration: 60,
+            dependsOn: '3'
+          },
+          { 
+            id: '5', 
+            time: "11:00 AM", 
+            task: "Client Meeting", 
+            status: "upcoming", 
+            priority: "high", 
+            flexible: false,
+            points: 150,
+            streak: 0,
+            completionHistory: [],
+            duration: 60,
+            compressible: false
+          },
+        ]);
+      }
+    } else {
+      setRoutineItems([
+        { 
+          id: '1', 
+          time: "6:00 AM", 
+          task: "Naam Jaap", 
+          status: "completed", 
+          priority: "high", 
+          flexible: true,
+          points: 75,
+          streak: 12,
+          quality: 5,
+          completionHistory: [],
+          lastCompleted: new Date().toISOString(),
+          duration: 30,
+          compressible: true,
+          minDuration: 15
+        },
+        { 
+          id: '2', 
+          time: "7:00 AM", 
+          task: "Morning Exercise", 
+          status: "completed", 
+          priority: "medium", 
+          flexible: true,
+          points: 50,
+          streak: 8,
+          completionHistory: [],
+          duration: 45,
+          compressible: true,
+          minDuration: 20
+        },
+        { 
+          id: '3', 
+          time: "8:00 AM", 
+          task: "Breakfast", 
+          status: "current", 
+          priority: "high", 
+          flexible: false,
+          points: 25,
+          streak: 15,
+          completionHistory: [],
+          duration: 30,
+          compressible: false
+        },
+        { 
+          id: '4', 
+          time: "9:00 AM", 
+          task: "Work Focus Time", 
+          status: "upcoming", 
+          priority: "high", 
+          flexible: true,
+          points: 100,
+          streak: 5,
+          completionHistory: [],
+          duration: 90,
+          compressible: true,
+          minDuration: 60,
+          dependsOn: '3'
+        },
+        { 
+          id: '5', 
+          time: "11:00 AM", 
+          task: "Client Meeting", 
+          status: "upcoming", 
+          priority: "high", 
+          flexible: false,
+          points: 150,
+          streak: 0,
+          completionHistory: [],
+          duration: 60,
+          compressible: false
+        },
+      ]);
+    }
+  }, []);
+
+  // --- keep routineItems in sync with localStorage ---
+  useEffect(() => {
+    if (routineItems.length > 0) {
+      localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(routineItems));
+    }
+  }, [routineItems]);
 
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isRecalibrateOpen, setIsRecalibrateOpen] = useState(false);
