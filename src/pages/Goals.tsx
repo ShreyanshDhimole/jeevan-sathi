@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -48,6 +47,7 @@ const Goals = () => {
 
   // ADD GOAL - moved here for the form component
   const handleAddGoal = (goalTitle: string) => {
+    console.log("handleAddGoal called with:", goalTitle);
     const newGoalItem: Goal = {
       id: Date.now().toString(),
       title: goalTitle,
@@ -59,11 +59,18 @@ const Goals = () => {
         currentTime: 0,
       },
     };
-    setGoals((prevGoals) => [...prevGoals, newGoalItem]);
+    console.log("Created new goal:", newGoalItem);
+    setGoals((prevGoals) => {
+      console.log("Previous goals:", prevGoals);
+      const newGoals = [...prevGoals, newGoalItem];
+      console.log("New goals array:", newGoals);
+      return newGoals;
+    });
     toast({
       title: "Goal Added! 🎯",
       description: `"${goalTitle}" has been added to your goals.`,
     });
+    console.log("Toast should be shown");
   };
 
   const deleteGoal = (id: string) => {
@@ -292,4 +299,3 @@ const Goals = () => {
 };
 
 export default Goals;
-
