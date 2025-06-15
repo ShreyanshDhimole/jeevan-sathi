@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -141,6 +140,91 @@ const Index = () => {
     improving: true,
   };
 
+  // NEW: DashboardTile config (titles, ordering, labels, icon, color class, etc)
+  const dashboardConfig = [
+    {
+      key: "routine",
+      title: "Today's Routine",
+      icon: "Clock",
+      bgClass: "from-blue-500 via-blue-600 to-indigo-700",
+      getData: () => ({
+        completed: routineSummary.completed,
+        total: routineSummary.total,
+        currentLabel: "Current",
+        mainText: routineSummary.currentTask ?? "-",
+        nextLabel: "Next",
+        nextText: routineSummary.nextTask
+          ? `${routineSummary.nextTask} (${routineSummary.nextTime})`
+          : "—",
+        progress: routineSummary.progressRatio,
+        statusText: `${routineSummary.completed}/${routineSummary.total} Done`,
+      }),
+    },
+    {
+      key: "tasks",
+      title: "Quick Tasks",
+      icon: "CheckCircle2",
+      bgClass: "from-emerald-500 via-green-600 to-teal-700",
+      getData: () => ({
+        left: taskSummary.left,
+        statusText: `${taskSummary.left} Left`,
+        preview: taskSummary.items.slice(0, 2),
+      }),
+    },
+    {
+      key: "goal",
+      title: firstGoal?.title || "Goal Progress",
+      icon: "Target",
+      bgClass: "from-purple-500 via-violet-600 to-purple-700",
+      getData: () => ({
+        percent: goalSummary.percent,
+        statusText: `${goalSummary.percent}%`,
+        completedDays: goalSummary.completedDays,
+        totalDays: goalSummary.totalDays,
+        daysLeft: goalSummary.daysLeft,
+      }),
+    },
+    {
+      key: "rewards",
+      title: "Points & Rewards",
+      icon: "Star",
+      bgClass: "from-orange-500 via-amber-600 to-yellow-600",
+      getData: () => ({
+        lastPoints: rewardsSummary.lastPoints,
+        totalPoints: rewardsSummary.totalPoints,
+        streak: rewardsSummary.streak,
+        nextRewardAt: rewardsSummary.nextRewardAt,
+        progress: `${Math.min(
+          (rewardsSummary.totalPoints / rewardsSummary.nextRewardAt) * 100,
+          100
+        )}%`,
+        statusText: `+${rewardsSummary.lastPoints}`,
+      }),
+    },
+    {
+      key: "reminders",
+      title: "Smart Reminders",
+      icon: "Calendar",
+      bgClass: "from-pink-500 via-rose-600 to-red-600",
+      getData: () => ({
+        reminders: remindersDashboard.slice(0, 2),
+        statusText: `${remindersDashboard.length} Active`,
+      }),
+    },
+    {
+      key: "weekly",
+      title: "Weekly Progress",
+      icon: "TrendingUp",
+      bgClass: "from-cyan-500 via-blue-600 to-indigo-700",
+      getData: () => ({
+        percent: weeklyStats.percent,
+        improving: weeklyStats.improving,
+        bars: weeklyStats.bars,
+        statusText: weeklyStats.percent > 0 ? `+${weeklyStats.percent}%` : "0%",
+      }),
+    },
+  ];
+
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
 
@@ -240,13 +324,8 @@ const Index = () => {
             routineItems={routineItems}
             suggestedRoutine={nextRoutine}
           />
-          <DashboardTiles 
-            routine={routineSummary}
-            tasks={taskSummary}
-            goal={goalSummary}
-            rewards={rewardsSummary}
-            reminders={remindersDashboard}
-            weekly={weeklyStats}
+          <DashboardTiles
+            dashboardConfig={dashboardConfig}
           />
           
           <div className="mt-8 text-center text-sm text-gray-400">
