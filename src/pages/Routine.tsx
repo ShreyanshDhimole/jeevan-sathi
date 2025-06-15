@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -13,6 +12,7 @@ import { RoutineCalendar } from "@/components/RoutineCalendar";
 import { RoutineItem, CompletionRecord, StreakReward } from "@/types/routine";
 import { recalibrateWithUrgentTask } from "@/utils/recalibrationLogic";
 import { useToast } from "@/hooks/use-toast";
+import { Celebration } from "@/components/Celebration"; // NEW
 
 const Routine = () => {
   const [routineItems, setRoutineItems] = useState<RoutineItem[]>([
@@ -99,6 +99,7 @@ const Routine = () => {
   const [streakReward, setStreakReward] = useState<StreakReward | null>(null);
   const [isStreakRewardOpen, setIsStreakRewardOpen] = useState(false);
   const [totalPoints, setTotalPoints] = useState(1450);
+  const [showCelebration, setShowCelebration] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -197,8 +198,10 @@ const Routine = () => {
       setStreakReward(reward);
       setIsStreakRewardOpen(true);
       setTotalPoints(prev => prev + task.points + reward.bonusPoints);
+      setShowCelebration(true); // celebration for streak reward
     } else {
       setTotalPoints(prev => prev + task.points);
+      setShowCelebration(true); // celebration for normal completion
     }
 
     setRoutineItems(prev => prev.map(item => 
@@ -302,6 +305,11 @@ const Routine = () => {
 
   return (
     <SidebarProvider>
+      {/* Celebration confetti (fires when showCelebration true, resets after) */}
+      <Celebration
+        trigger={showCelebration}
+        onDone={() => setShowCelebration(false)}
+      />
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
         <main className="flex-1 flex flex-col items-stretch xl:px-8 px-4 pt-6 bg-transparent">
@@ -519,6 +527,7 @@ const Routine = () => {
           }}
           reward={streakReward}
           onClaim={() => {
+            setShowCelebration(true); // celebration on reward claim
             toast({
               title: "Reward Claimed! 🎉",
               description: `You earned ${streakReward.bonusPoints} bonus points!`,
