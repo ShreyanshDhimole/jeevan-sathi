@@ -53,10 +53,10 @@ export const RoutineCalendar = ({ isOpen, onClose, routineItems }: RoutineCalend
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-white border shadow-xl">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden bg-white border shadow-xl">
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <Calendar className="h-6 w-6 text-purple-600" />
+            <Clock className="h-6 w-6 text-purple-600" />
             Routine Calendar
             <button 
               onClick={onClose}
@@ -67,14 +67,14 @@ export const RoutineCalendar = ({ isOpen, onClose, routineItems }: RoutineCalend
           </DialogTitle>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4 overflow-y-auto max-h-[calc(90vh-120px)]">
           <div className="space-y-4">
-            <div className="bg-white border rounded-lg p-2 shadow-sm">
+            <div className="bg-white border rounded-xl p-4 shadow-sm">
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                className="w-full pointer-events-auto bg-white"
+                className="w-full mx-auto"
                 modifiers={{
                   hasCompletions: (date) => hasCompletionsOnDate(date)
                 }}
@@ -83,28 +83,15 @@ export const RoutineCalendar = ({ isOpen, onClose, routineItems }: RoutineCalend
                     backgroundColor: '#dcfce7',
                     color: '#166534',
                     fontWeight: 'bold',
-                    borderRadius: '6px'
+                    borderRadius: '8px'
                   }
                 }}
-                classNames={{
-                  months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-                  month: "space-y-4",
-                  caption: "flex justify-center pt-1 relative items-center",
-                  caption_label: "text-sm font-medium",
-                  nav: "space-x-1 flex items-center",
-                  nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-gray-300 rounded",
-                  nav_button_previous: "absolute left-1",
-                  nav_button_next: "absolute right-1",
-                  table: "w-full border-collapse space-y-1",
-                  head_row: "flex",
-                  head_cell: "text-gray-500 rounded-md w-9 font-normal text-[0.8rem]",
-                  row: "flex w-full mt-2",
-                  cell: "h-9 w-9 text-center text-sm p-0 relative hover:bg-gray-100 rounded-md",
-                  day: "h-9 w-9 p-0 font-normal hover:bg-gray-100 rounded-md",
-                  day_selected: "bg-purple-600 text-white hover:bg-purple-700",
-                  day_today: "bg-blue-100 text-blue-900 font-semibold",
-                  day_outside: "text-gray-300 opacity-50",
-                  day_disabled: "text-gray-300 opacity-30",
+                styles={{
+                  month: { width: '100%' },
+                  table: { width: '100%' },
+                  head_cell: { width: '2.5rem', height: '2.5rem' },
+                  cell: { width: '2.5rem', height: '2.5rem' },
+                  day: { width: '2.5rem', height: '2.5rem' }
                 }}
               />
             </div>
@@ -113,7 +100,7 @@ export const RoutineCalendar = ({ isOpen, onClose, routineItems }: RoutineCalend
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 min-h-0">
             {selectedDate && (
               <>
                 <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 p-4 rounded-lg">
@@ -143,7 +130,7 @@ export const RoutineCalendar = ({ isOpen, onClose, routineItems }: RoutineCalend
                     <p className="text-sm">Tasks completed on this day will appear here</p>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                  <div className="space-y-3 overflow-y-auto">
                     <h4 className="font-semibold text-gray-900 text-lg">Completed Tasks</h4>
                     {selectedDateTasks.map((task) => (
                       <div key={task.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">

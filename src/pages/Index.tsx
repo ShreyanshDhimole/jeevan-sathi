@@ -1,11 +1,50 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { DashboardTiles } from "@/components/DashboardTiles";
 import { RoutineBanner } from "@/components/RoutineBanner";
+import { RoutineCalendar } from "@/components/RoutineCalendar";
+import { UrgentTaskDialog } from "@/components/UrgentTaskDialog";
+import { Calendar, Zap } from "lucide-react";
 
 const Index = () => {
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
+
+  // Mock routine items for calendar - in real app this would come from context or props
+  const mockRoutineItems = [
+    { 
+      id: '1', 
+      time: "6:00 AM", 
+      task: "Naam Jaap", 
+      status: "completed" as const, 
+      priority: "high" as const, 
+      flexible: true,
+      points: 75,
+      streak: 12,
+      quality: 5,
+      completionHistory: [
+        {
+          date: new Date().toISOString(),
+          quality: 5,
+          duration: 30,
+          notes: "Great focus today, felt very peaceful",
+          pointsEarned: 75
+        }
+      ],
+      lastCompleted: new Date().toISOString(),
+      duration: 30,
+      compressible: true,
+      minDuration: 15
+    }
+  ];
+
+  const handleUrgentTask = (taskDescription: string, duration: number) => {
+    console.log('Urgent task:', taskDescription, duration);
+    // This would integrate with your routine management logic
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
@@ -17,6 +56,24 @@ const Index = () => {
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-sm text-gray-600">Live updates active</span>
+            </div>
+            
+            {/* Add calendar and urgent task buttons */}
+            <div className="ml-auto flex items-center gap-3">
+              <button 
+                onClick={() => setIsCalendarOpen(true)}
+                className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors shadow-sm"
+              >
+                <Calendar className="h-4 w-4" />
+                Calendar
+              </button>
+              <button 
+                onClick={() => setIsUrgentTaskOpen(true)}
+                className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+              >
+                <Zap className="h-4 w-4" />
+                Urgent Task
+              </button>
             </div>
           </div>
           
@@ -45,6 +102,19 @@ const Index = () => {
           </div>
         </main>
       </div>
+
+      {/* Calendar and Urgent Task Dialogs */}
+      <RoutineCalendar
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+        routineItems={mockRoutineItems}
+      />
+
+      <UrgentTaskDialog
+        isOpen={isUrgentTaskOpen}
+        onClose={() => setIsUrgentTaskOpen(false)}
+        onAddUrgentTask={handleUrgentTask}
+      />
     </SidebarProvider>
   );
 };
