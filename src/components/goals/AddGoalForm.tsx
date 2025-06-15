@@ -1,6 +1,4 @@
-
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface AddGoalFormProps {
@@ -28,7 +26,6 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
     }
   };
 
-  // NEW: Handle form submit to prevent default
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("AddGoalForm: form submit event");
@@ -45,16 +42,6 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
         onKeyDown={handleKeyDown}
         className="flex-1"
       />
-      <Button
-        type="submit"
-        onClick={() => {
-          console.log("Button Clicked"); // DEBUG
-        }}
-        className="whitespace-nowrap"
-        disabled={inputValue.trim().length === 0}
-      >
-        Save Goal
-      </Button>
     </form>
   );
 };
