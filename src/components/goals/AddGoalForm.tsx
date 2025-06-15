@@ -26,10 +26,6 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
     }
   };
 
-  const handleButtonClick = () => {
-    console.log("Button clicked directly");
-  };
-
   return (
     <form className="mb-6 flex items-center gap-4" onSubmit={handleSubmit}>
       <Input
@@ -46,7 +42,6 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
         type="submit"
         className="whitespace-nowrap"
         disabled={inputValue.trim().length === 0}
-        onClick={handleButtonClick}
       >
         <Plus className="h-4 w-4 mr-2" />
         Add New Goal
