@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Sheet,
@@ -19,6 +20,7 @@ import {
   Target,
   Gift,
   AlertTriangle,
+  Bell,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -35,6 +37,7 @@ export function AppSidebar() {
     { title: "Rewards", url: "/rewards", icon: Gift },
     { title: "Punishments", url: "/punishments", icon: AlertTriangle },
     { title: "Insights", url: "/insights", icon: BarChart },
+    { title: "Reminders & Notes", url: "/reminders-notes", icon: Bell },
     { title: "Settings", url: "/settings", icon: Settings },
   ];
 
