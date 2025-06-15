@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 
 interface AddTaskDialogProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface AddTaskDialogProps {
     priority: 'high' | 'medium' | 'low';
     preferredTime: string;
     flexible: boolean;
+    points: number;
   }) => void;
 }
 
@@ -24,6 +26,7 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
   const [preferredTime, setPreferredTime] = useState("");
   const [flexible, setFlexible] = useState(true);
   const [description, setDescription] = useState("");
+  const [points, setPoints] = useState([50]);
 
   const handleSubmit = () => {
     if (!taskName.trim() || !preferredTime) return;
@@ -32,7 +35,8 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
       task: taskName,
       priority,
       preferredTime,
-      flexible
+      flexible,
+      points: points[0]
     });
 
     // Reset form
@@ -41,6 +45,7 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
     setPreferredTime("");
     setFlexible(true);
     setDescription("");
+    setPoints([50]);
     onClose();
   };
 
@@ -51,9 +56,14 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
     setPreferredTime(timeString);
   };
 
+  const getPointsSuggestion = () => {
+    const basePts = priority === 'high' ? 100 : priority === 'medium' ? 50 : 25;
+    return `Suggested: ${basePts} points`;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Task</DialogTitle>
         </DialogHeader>
@@ -114,6 +124,37 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
                 <Label htmlFor="flexible-no">Fixed - Must be done at this time</Label>
               </div>
             </RadioGroup>
+          </div>
+
+          <div>
+            <Label>Points System</Label>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Points for completion:</span>
+                <span className="font-bold text-green-600">{points[0]} points</span>
+              </div>
+              <Slider
+                value={points}
+                onValueChange={setPoints}
+                max={200}
+                min={10}
+                step={10}
+                className="w-full"
+              />
+              <div className="text-xs text-gray-500 flex justify-between">
+                <span>10 pts</span>
+                <span className="text-blue-600">{getPointsSuggestion()}</span>
+                <span>200 pts</span>
+              </div>
+              <div className="bg-orange-50 p-3 rounded-lg text-sm">
+                <div className="font-medium text-orange-800 mb-1">⚠️ Points System</div>
+                <div className="text-orange-700">
+                  • Earn <span className="font-semibold text-green-600">+{points[0]} points</span> on completion
+                  • Lose <span className="font-semibold text-red-600">-{points[0]} points</span> if missed
+                  • Streak bonuses: 7+ days = +50 pts, 30+ days = +100 pts
+                </div>
+              </div>
+            </div>
           </div>
 
           <div>
