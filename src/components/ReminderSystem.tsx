@@ -12,6 +12,7 @@ interface ReminderSystemProps {
 export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemProps) => {
   const { toast } = useToast();
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [overdueNotificationsSent, setOverdueNotificationsSent] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const saved = localStorage.getItem('appSettings');
@@ -53,17 +54,20 @@ export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemPro
             });
           }
 
-          // Send configurable overdue reminder
-          if (currentTime > taskTime + settings.reminders.overdueMinutes && task.status === 'upcoming') {
+          // Send overdue reminder only once per task
+          if (currentTime > taskTime + settings.reminders.overdueMinutes && 
+              task.status === 'upcoming' && 
+              !overdueNotificationsSent.has(task.id)) {
             toast({
-              title: "Task Overdue ⏱️",
-              description: `"${task.task}" is overdue. You can still complete it!`,
-              duration: 12000,
+              title: "Task Available ⏱️",
+              description: `"${task.task}" can still be completed when you're ready.`,
+              duration: 8000,
             });
+            setOverdueNotificationsSent(prev => new Set(prev).add(task.id));
           }
         }
 
-        // Motivational nudges for in-progress tasks (configurable timing)
+        // Motivational nudges for in-progress tasks (less frequent)
         if (task.status === 'in-progress' && task.startedAt) {
           const startTime = new Date(task.startedAt);
           const elapsed = (now.getTime() - startTime.getTime()) / (1000 * 60); // minutes
@@ -83,7 +87,24 @@ export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemPro
     checkReminders(); // Check immediately
 
     return () => clearInterval(interval);
-  }, [routineItems, toast, onUpdateTask, settings.reminders]);
+  }, [routineItems, toast, onUpdateTask, settings.reminders, overdueNotificationsSent]);
+
+  // Reset overdue notifications daily
+  useEffect(() => {
+    const resetDaily = () => {
+      setOverdueNotificationsSent(new Set());
+    };
+
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+    const timeout = setTimeout(resetDaily, timeUntilMidnight);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   return null; // This component doesn't render anything
 };
