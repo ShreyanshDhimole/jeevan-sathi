@@ -24,6 +24,7 @@ const Goals = () => {
   const [editingGoal, setEditingGoal] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Always sync from localStorage on mount
   useEffect(() => {
     const storedGoals = localStorage.getItem("goals");
     if (storedGoals) {
@@ -31,47 +32,41 @@ const Goals = () => {
     }
   }, []);
 
+  // Always save goals to localStorage when goals change
   useEffect(() => {
     localStorage.setItem("goals", JSON.stringify(goals));
   }, [goals]);
 
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  // ADD GOAL - moved here for the form component
-  const handleAddGoal = (goalTitle: string) => {
-    console.log("handleAddGoal called with:", goalTitle);
-    const newGoalItem: Goal = {
-      id: Date.now().toString(),
-      title: goalTitle,
-      progress: 0,
-      subGoals: [],
-      timerState: {
-        isRunning: false,
-        startTime: null,
-        currentTime: 0,
-      },
-    };
-    console.log("Created new goal:", newGoalItem);
-    setGoals((prevGoals) => {
-      console.log("Previous goals:", prevGoals);
-      const newGoals = [...prevGoals, newGoalItem];
-      console.log("New goals array:", newGoals);
-      return newGoals;
-    });
-    toast({
-      title: "Goal Added! 🎯",
-      description: `"${goalTitle}" has been added to your goals.`,
-    });
-    console.log("Toast should be shown");
-  };
+  // Add goal handler
+  const handleAddGoal = React.useCallback(
+    (goalTitle: string) => {
+      // Defensive: avoid empty goal
+      const trimmed = goalTitle.trim();
+      if (!trimmed) return;
+      const newGoalItem: Goal = {
+        id: Date.now().toString(),
+        title: trimmed,
+        progress: 0,
+        subGoals: [],
+        timerState: {
+          isRunning: false,
+          startTime: null,
+          currentTime: 0,
+        },
+      };
+      setGoals((prevGoals) => {
+        const newGoals = [...prevGoals, newGoalItem];
+        // Save to localStorage immediately for better reliability
+        localStorage.setItem("goals", JSON.stringify(newGoals));
+        return newGoals;
+      });
+      toast({
+        title: "Goal Added! 🎯",
+        description: `"${trimmed}" has been added to your goals.`,
+      });
+    },
+    [toast]
+  );
 
   const deleteGoal = (id: string) => {
     const goalToDelete = goals.find((goal) => goal.id === id);
