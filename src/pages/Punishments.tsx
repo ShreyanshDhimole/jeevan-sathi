@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { AlertTriangle, CheckCircle, Plus, Dice6 } from "lucide-react";
+import { AlertTriangle, CheckCircle, Plus, Dice6, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -122,6 +122,25 @@ const Punishments = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const deletePunishment = (id: string) => {
+    setSettings(prev => {
+      const updated = {
+        ...prev,
+        punishments: {
+          ...prev.punishments,
+          availablePunishments: prev.punishments.availablePunishments.filter(p => p.id !== id)
+        }
+      };
+      localStorage.setItem('appSettings', JSON.stringify(updated));
+      return updated;
+    });
+    toast({
+      title: "Punishment Deleted 🗑️",
+      description: "The punishment has been removed from available punishments.",
+      variant: "destructive",
+    });
   };
 
   const availablePunishments = settings.punishments.availablePunishments.filter(
@@ -262,6 +281,13 @@ const Punishments = () => {
                       >
                         {points >= punishment.cost ? 'Accept' : 'Not enough points'}
                       </Button>
+                      <button
+                        title="Delete Punishment"
+                        onClick={() => deletePunishment(punishment.id)}
+                        className="ml-2 p-2 hover:bg-red-100 rounded transition-colors"
+                      >
+                        <Trash className="h-5 w-5 text-red-500" />
+                      </button>
                     </div>
                   </div>
                 ))}

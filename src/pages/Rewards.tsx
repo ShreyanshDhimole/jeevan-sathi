@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Gift, Star, Crown, Trophy, Plus } from "lucide-react";
+import { Gift, Star, Crown, Trophy, Plus, Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -70,6 +70,16 @@ const Rewards = () => {
     }
   };
 
+  // Handle reward deletion
+  const deleteReward = (id: number) => {
+    setRewards(rewards => rewards.filter(r => r.id !== id));
+    toast({
+      title: "Reward Deleted 🗑️",
+      description: `The reward has been removed from your list.`,
+      variant: "destructive",
+    });
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
@@ -136,6 +146,13 @@ const Rewards = () => {
                         disabled={points < item.cost}
                       >
                         {points >= item.cost ? 'Claim' : 'Locked'}
+                      </button>
+                      <button
+                        title="Delete Reward"
+                        onClick={() => deleteReward(item.id)}
+                        className="ml-2 p-2 hover:bg-red-100 rounded transition-colors"
+                      >
+                        <Trash className="h-5 w-5 text-red-500" />
                       </button>
                     </div>
                   </div>
