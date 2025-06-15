@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/components/ui/sonner";
 import { formatTime } from "@/utils/formatTime";
 
+// Recursive subgoal structure
 export interface SubGoal {
   id: string;
   title: string;
   isCompleted: boolean;
+  subGoals?: SubGoal[];
 }
 
 export interface Goal {
@@ -53,6 +55,43 @@ export function useGoals() {
     }
   }, [goals]);
 
+  // Recursive helpers
+  const updateSubGoalRecursive = (
+    subGoals: SubGoal[],
+    subGoalId: string,
+    updates: Partial<Omit<SubGoal, "subGoals">>
+  ): SubGoal[] =>
+    subGoals.map((subGoal) =>
+      subGoal.id === subGoalId
+        ? { ...subGoal, ...updates }
+        : { ...subGoal, subGoals: subGoal.subGoals ? updateSubGoalRecursive(subGoal.subGoals, subGoalId, updates) : [] }
+    );
+
+  const addSubGoalRecursive = (subGoals: SubGoal[], parentId: string, subGoalTitle: string): SubGoal[] =>
+    subGoals.map((subGoal) => {
+      if (subGoal.id === parentId) {
+        const newSubGoal: SubGoal = {
+          id: Date.now().toString() + Math.random().toString(16).slice(2),
+          title: subGoalTitle,
+          isCompleted: false,
+          subGoals: [],
+        };
+        return { ...subGoal, subGoals: [...(subGoal.subGoals || []), newSubGoal] };
+      }
+      return {
+        ...subGoal,
+        subGoals: subGoal.subGoals ? addSubGoalRecursive(subGoal.subGoals, parentId, subGoalTitle) : [],
+      };
+    });
+
+  const deleteSubGoalRecursive = (subGoals: SubGoal[], subGoalId: string): SubGoal[] =>
+    subGoals
+      .filter((sg) => sg.id !== subGoalId)
+      .map((sg) => ({
+        ...sg,
+        subGoals: sg.subGoals ? deleteSubGoalRecursive(sg.subGoals, subGoalId) : [],
+      }));
+
   const handleAddGoal = useCallback((goalTitle: string) => {
     const trimmed = goalTitle.trim();
     console.log("useGoals: handleAddGoal called with:", trimmed); // DEBUG
@@ -94,68 +133,80 @@ export function useGoals() {
     );
   };
 
+  // Recursively update subGoal at any depth
   const updateSubGoal = (
     goalId: string,
     subGoalId: string,
-    updates: Partial<{ title: string; isCompleted: boolean }>
+    updates: Partial<Omit<SubGoal, "subGoals">>
   ) => {
-    setGoals(
-      goals.map((goal) => {
-        if (goal.id === goalId) {
-          return {
-            ...goal,
-            subGoals: goal.subGoals.map((subGoal) =>
-              subGoal.id === subGoalId ? { ...subGoal, ...updates } : subGoal
-            ),
-          };
-        }
-        return goal;
-      })
-    );
-  };
-
-  const addSubGoal = (goalId: string, subGoalTitle: string) => {
-    if (subGoalTitle.trim() !== "") {
-      const newSubGoal = {
-        id: Date.now().toString(),
-        title: subGoalTitle,
-        isCompleted: false,
-      };
-      setGoals(
-        goals.map((goal) =>
-          goal.id === goalId
-            ? { ...goal, subGoals: [...goal.subGoals, newSubGoal] }
-            : goal
-        )
-      );
-      toast.success("Sub-goal Added! ✨", {
-        description: `"${subGoalTitle}" has been added as a sub-goal.`,
-      });
-    }
-  };
-
-  const deleteSubGoal = (goalId: string, subGoalId: string) => {
-    const goal = goals.find((g) => g.id === goalId);
-    const subGoal = goal?.subGoals.find((sg) => sg.id === subGoalId);
-
     setGoals(
       goals.map((goal) =>
         goal.id === goalId
           ? {
               ...goal,
-              subGoals: goal.subGoals.filter(
-                (subGoal) => subGoal.id !== subGoalId
-              ),
+              subGoals: updateSubGoalRecursive(goal.subGoals, subGoalId, updates),
             }
           : goal
       )
     );
+  };
 
-    if (subGoal) {
-      toast.error("Sub-goal Deleted", {
-        description: `"${subGoal.title}" has been removed.`,
-      });
-    }
+  // Recursively add subGoal at any depth
+  // If parentSubGoalId is null, add to root goal.subGoals (for backward-compat)
+  const addSubGoal = (goalId: string, subGoalTitle: string, parentSubGoalId?: string) => {
+    if (subGoalTitle.trim() === "") return;
+    setGoals(
+      goals.map((goal) => {
+        if (goal.id !== goalId) return goal;
+        if (!parentSubGoalId) {
+          // Add as root level sub-goal
+          const newSubGoal: SubGoal = {
+            id: Date.now().toString() + Math.random().toString(16).slice(2),
+            title: subGoalTitle,
+            isCompleted: false,
+            subGoals: [],
+          };
+          toast.success("Sub-goal Added! ✨", {
+            description: `"${subGoalTitle}" has been added as a sub-goal.`,
+          });
+          return { ...goal, subGoals: [...goal.subGoals, newSubGoal] };
+        } else {
+          // Add as child of another sub-goal
+          toast.success("Sub-goal Added! ✨", {
+            description: `"${subGoalTitle}" has been added as a sub-goal.`,
+          });
+          return {
+            ...goal,
+            subGoals: addSubGoalRecursive(goal.subGoals, parentSubGoalId, subGoalTitle),
+          };
+        }
+      })
+    );
+  };
+
+  // Recursively delete subGoal at any depth
+  const deleteSubGoal = (goalId: string, subGoalId: string) => {
+    setGoals(
+      goals.map((goal) => {
+        if (goal.id !== goalId) return goal;
+        let deletedTitle = "";
+        const findDeleted = (subs: SubGoal[]): void => {
+          subs.forEach((sg) => {
+            if (sg.id === subGoalId) deletedTitle = sg.title;
+            if (sg.subGoals) findDeleted(sg.subGoals);
+          });
+        };
+        findDeleted(goal.subGoals);
+
+        if (deletedTitle) {
+          toast.error("Sub-goal Deleted", {
+            description: `"${deletedTitle}" has been removed.`,
+          });
+        }
+
+        return { ...goal, subGoals: deleteSubGoalRecursive(goal.subGoals, subGoalId) };
+      })
+    );
   };
 
   const toggleTimer = (goalId: string) => {

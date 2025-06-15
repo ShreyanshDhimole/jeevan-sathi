@@ -1,6 +1,6 @@
-
 import React from "react";
 import GoalCard, { SubGoal } from "./GoalCard";
+import type { SubGoal } from "@/hooks/useGoals";
 
 interface Goal {
   id: string;
