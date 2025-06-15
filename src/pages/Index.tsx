@@ -328,7 +328,7 @@ const Index = () => {
           
           {/* Show points as simple black text below action buttons */}
           <div className="flex justify-end mb-2">
-            <span className="text-base font-semibold text-black">
+            <span className="text-base font-semibold text-black mr-6">
               Points: {pointsSummary.totalPoints}
             </span>
           </div>
