@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -9,7 +10,6 @@ import { TaskTracker } from "@/components/TaskTracker";
 import { ReminderSystem } from "@/components/ReminderSystem";
 import { StreakRewards } from "@/components/StreakRewards";
 import { RoutineCalendar } from "@/components/RoutineCalendar";
-import { TaskNotesModal } from "@/components/TaskNotesModal";
 import { RoutineItem, CompletionRecord, StreakReward } from "@/types/routine";
 import { recalibrateWithUrgentTask } from "@/utils/recalibrationLogic";
 import { useToast } from "@/hooks/use-toast";
@@ -93,7 +93,6 @@ const Routine = () => {
   const [isRecalibrateOpen, setIsRecalibrateOpen] = useState(false);
   const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [isTaskNotesOpen, setIsTaskNotesOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedTask, setSelectedTask] = useState<RoutineItem | null>(null);
   const [isTaskTrackerOpen, setIsTaskTrackerOpen] = useState(false);
@@ -244,11 +243,8 @@ const Routine = () => {
     if (task.status === 'current' || task.status === 'in-progress') {
       setSelectedTask(task);
       setIsTaskTrackerOpen(true);
-    } else {
-      // Show notes for completed or other tasks
-      setSelectedTask(task);
-      setIsTaskNotesOpen(true);
     }
+    // Removed the notes modal functionality for routine tasks
   };
 
   const updateTask = (taskId: string, updates: Partial<RoutineItem>) => {
@@ -438,11 +434,6 @@ const Routine = () => {
                             Compressible
                           </span>
                         )}
-                        {item.completionHistory.length > 0 && (
-                          <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
-                            {item.completionHistory.length} notes
-                          </span>
-                        )}
                       </div>
                     </div>
                     
@@ -504,15 +495,6 @@ const Routine = () => {
         isOpen={isCalendarOpen}
         onClose={() => setIsCalendarOpen(false)}
         routineItems={routineItems}
-      />
-
-      <TaskNotesModal
-        task={selectedTask}
-        isOpen={isTaskNotesOpen}
-        onClose={() => {
-          setIsTaskNotesOpen(false);
-          setSelectedTask(null);
-        }}
       />
 
       {selectedTask && isTaskTrackerOpen && (
