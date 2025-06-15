@@ -28,10 +28,16 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
   const [flexible, setFlexible] = useState(true);
   const [description, setDescription] = useState("");
   const [points, setPoints] = useState([50]);
-  const [duration, setDuration] = useState(""); // New: duration in minutes
+  const [duration, setDuration] = useState(""); // Time required in minutes, string for input
 
   const handleSubmit = () => {
-    if (!taskName.trim() || !preferredTime || !duration || isNaN(Number(duration)) || Number(duration) <= 0) return;
+    if (
+      !taskName.trim() ||
+      !preferredTime ||
+      !duration ||
+      isNaN(Number(duration)) ||
+      Number(duration) <= 0
+    ) return;
 
     onAddTask({
       task: taskName,
@@ -143,7 +149,7 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
               inputMode="numeric"
               required
             />
-            <span className="text-xs text-gray-500">Required. Must be a positive number.</span>
+            <span className="text-xs text-gray-500">Required. Enter a positive number of minutes.</span>
           </div>
 
           <div>

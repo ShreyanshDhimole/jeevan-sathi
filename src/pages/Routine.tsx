@@ -13,8 +13,11 @@ import { RoutineItem, CompletionRecord, StreakReward } from "@/types/routine";
 import { recalibrateWithUrgentTask } from "@/utils/recalibrationLogic";
 import { useToast } from "@/hooks/use-toast";
 import { Celebration } from "@/components/Celebration"; // Only for streak reward
+import { useTasks } from "@/hooks/useTasks"; // Import useTasks to unify with Tasks tab
 
 const Routine = () => {
+  const { tasks } = useTasks(); // Get user tasks
+
   const [routineItems, setRoutineItems] = useState<RoutineItem[]>([
     { 
       id: '1', 
@@ -106,10 +109,15 @@ const Routine = () => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
       updateRoutineStatus();
-    }, 60000); // Update every minute
+      triggerAutoRecalibration(); // Run recalibration automatically every minute
+    }, 60000);
+
+    // Also run once on mount for synced recalibration
+    updateRoutineStatus();
+    triggerAutoRecalibration();
 
     return () => clearInterval(timer);
-  }, []);
+  }, [tasks, routineItems.length]);
 
   const updateRoutineStatus = () => {
     const now = new Date();
@@ -132,6 +140,53 @@ const Routine = () => {
       }
       return item;
     }));
+  };
+
+  const triggerAutoRecalibration = () => {
+    const now = new Date();
+    const allItems = getUnifiedRoutineItems();
+
+    const updated = allItems.map(item => {
+      if (item.status === 'completed') return item;
+      const [time, period] = item.time.split(' ');
+      const [hour, minute] = time.split(':').map(Number);
+      const itemHour = period === 'PM' && hour !== 12 ? hour + 12 : (period === 'AM' && hour === 12 ? 0 : hour);
+      const itemTime = itemHour * 60 + minute;
+      const nowTime = now.getHours() * 60 + now.getMinutes();
+
+      // Auto-miss logic
+      if (item.status === 'upcoming' && nowTime > itemTime + 30) {
+        return { ...item, status: 'missed' as const };
+      }
+      // Auto-current logic (window ±15min)
+      if (item.status === 'upcoming' && nowTime >= itemTime - 15 && nowTime <= itemTime + 15) {
+        return { ...item, status: 'current' as const };
+      }
+      return item;
+    });
+
+    setRoutineItems(updated.filter(i => !i.id.startsWith("tasktab-"))); // Don't writeback taskTabItems
+    // If you want, you can also call any custom rescheduling logic here
+  };
+
+  const getUnifiedRoutineItems = () => {
+    const taskTabItems = tasks
+      .filter((t) => !routineItems.some((r) => r.task === t.task)) // exclude duplicates
+      .map((t) => ({
+        id: "tasktab-" + t.id,
+        time: t.preferredTime ?? "6:00 PM",
+        task: t.task,
+        status: t.completed ? "completed" : "upcoming",
+        priority: t.priority,
+        flexible: t.flexible ?? true,
+        points: t.points ?? 25,
+        streak: 0,
+        completionHistory: [],
+        duration: t.duration ?? 30,
+        compressible: t.flexible ?? true,
+        minDuration: t.duration ? Math.max(15, t.duration * 0.5) : 15,
+      }))
+    return [...routineItems, ...taskTabItems].sort((a, b) => convertTimeToMinutes(a.time) - convertTimeToMinutes(b.time));
   };
 
   const addTask = (newTask: { task: string; priority: 'high' | 'medium' | 'low'; preferredTime: string; flexible: boolean; points: number }) => {
@@ -343,26 +398,8 @@ const Routine = () => {
             </div>
           </div>
 
-          {getMissedTasksCount() > 0 && (
-            <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-orange-600" />
-                  <span className="text-orange-800 font-medium">
-                    You have {getMissedTasksCount()} missed tasks. Let me help you recalibrate!
-                  </span>
-                </div>
-                <button 
-                  onClick={recalibrateRoutine}
-                  className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Recalibrate Now
-                </button>
-              </div>
-            </div>
-          )}
-          
+          {/* REMOVED the missed tasks recalibration alert and Recalibrate Now button */}
+
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
               <div className="flex items-center justify-between mb-4">
@@ -380,7 +417,7 @@ const Routine = () => {
               </div>
               
               <div className="space-y-3">
-                {routineItems.map((item) => (
+                {getUnifiedRoutineItems().map((item) => (
                   <div 
                     key={item.id} 
                     className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
