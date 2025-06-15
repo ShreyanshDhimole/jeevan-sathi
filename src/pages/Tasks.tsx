@@ -1,10 +1,65 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { CheckSquare, Plus, Star } from "lucide-react";
+import { CheckSquare, Plus, Star, Trash2, Edit } from "lucide-react";
+import { AddTaskDialog } from "@/components/AddTaskDialog";
+
+interface Task {
+  id: string;
+  task: string;
+  priority: 'high' | 'medium' | 'low';
+  completed: boolean;
+  starred: boolean;
+}
 
 const Tasks = () => {
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: '1', task: "Complete project proposal", priority: "high", completed: false, starred: false },
+    { id: '2', task: "Call insurance company", priority: "medium", completed: true, starred: false },
+    { id: '3', task: "Buy groceries", priority: "low", completed: false, starred: true },
+    { id: '4', task: "Schedule dentist appointment", priority: "medium", completed: false, starred: false },
+    { id: '5', task: "Review team feedback", priority: "high", completed: true, starred: true },
+  ]);
+
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+
+  const toggleComplete = (id: string) => {
+    setTasks(prev => prev.map(task => 
+      task.id === id ? { ...task, completed: !task.completed } : task
+    ));
+  };
+
+  const toggleStar = (id: string) => {
+    setTasks(prev => prev.map(task => 
+      task.id === id ? { ...task, starred: !task.starred } : task
+    ));
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks(prev => prev.filter(task => task.id !== id));
+  };
+
+  const addTask = (newTask: { task: string; priority: 'high' | 'medium' | 'low'; preferredTime: string; flexible: boolean }) => {
+    const task: Task = {
+      id: Date.now().toString(),
+      task: newTask.task,
+      priority: newTask.priority,
+      completed: false,
+      starred: false
+    };
+    setTasks(prev => [...prev, task]);
+  };
+
+  const getTaskStats = () => {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.completed).length;
+    const high = tasks.filter(t => t.priority === 'high' && !t.completed).length;
+    return { total, completed, high };
+  };
+
+  const stats = getTaskStats();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
@@ -18,34 +73,48 @@ const Tasks = () => {
               <span className="text-lg font-semibold text-gray-800">Tasks</span>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-white p-4 rounded-xl shadow-sm border">
+              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+              <div className="text-sm text-gray-600">Total Tasks</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl shadow-sm border">
+              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+              <div className="text-sm text-gray-600">Completed</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl shadow-sm border">
+              <div className="text-2xl font-bold text-red-600">{stats.high}</div>
+              <div className="text-sm text-gray-600">High Priority</div>
+            </div>
+          </div>
           
           <div className="space-y-4">
             <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Today's Tasks</h2>
-                <button className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                <button 
+                  onClick={() => setIsAddTaskOpen(true)}
+                  className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                >
                   <Plus className="h-4 w-4" />
                   New Task
                 </button>
               </div>
               
               <div className="space-y-3">
-                {[
-                  { task: "Complete project proposal", priority: "high", completed: false },
-                  { task: "Call insurance company", priority: "medium", completed: true },
-                  { task: "Buy groceries", priority: "low", completed: false },
-                  { task: "Schedule dentist appointment", priority: "medium", completed: false },
-                  { task: "Review team feedback", priority: "high", completed: true },
-                ].map((item, index) => (
-                  <div key={index} className={`flex items-center gap-4 p-3 rounded-lg border ${
+                {tasks.map((item) => (
+                  <div key={item.id} className={`flex items-center gap-4 p-3 rounded-lg border ${
                     item.completed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200'
                   }`}>
-                    <input 
-                      type="checkbox" 
-                      checked={item.completed}
-                      className="h-4 w-4 text-green-600 rounded"
-                      readOnly
-                    />
+                    <button onClick={() => toggleComplete(item.id)}>
+                      <input 
+                        type="checkbox" 
+                        checked={item.completed}
+                        className="h-4 w-4 text-green-600 rounded"
+                        readOnly
+                      />
+                    </button>
                     <div className="flex-1">
                       <div className={`font-medium ${item.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                         {item.task}
@@ -58,7 +127,15 @@ const Tasks = () => {
                     }`}>
                       {item.priority}
                     </div>
-                    <Star className="h-4 w-4 text-gray-400" />
+                    <button onClick={() => toggleStar(item.id)}>
+                      <Star className={`h-4 w-4 ${item.starred ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} />
+                    </button>
+                    <button 
+                      onClick={() => deleteTask(item.id)}
+                      className="text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -66,6 +143,12 @@ const Tasks = () => {
           </div>
         </main>
       </div>
+
+      <AddTaskDialog 
+        isOpen={isAddTaskOpen} 
+        onClose={() => setIsAddTaskOpen(false)}
+        onAddTask={addTask}
+      />
     </SidebarProvider>
   );
 };
