@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -9,6 +8,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { AppSettings, defaultSettings, Punishment } from "@/types/settings";
+import { Input } from "@/components/ui/input";
+
+// Capacitor/simulated ScreenTimePlugin bridge
+const ScreenTimePlugin = (window as any).ScreenTimePlugin ?? {
+  // Fallbacks for dev environment (mock, so UI works in browser)
+  getScreenTimeLimits: async () => ({}),
+  setScreenTimeLimit: async ({ app, minutes }: { app: string; minutes: number }) => {},
+  getAppUsageStats: async ({ date }: { date: string }) => ({ apps: [] }),
+};
+
+// Helper for today date in YYYY-MM-DD
+const todayStr = () => {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+};
 
 const Settings = () => {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
@@ -80,6 +94,64 @@ const Settings = () => {
     }
   }, []);
 
+  const [appLimits, setAppLimits] = useState<{ [app: string]: number }>({});
+  const [usageStats, setUsageStats] = useState<{ [pkg: string]: number }>({});
+  const [loadingAppLimits, setLoadingAppLimits] = useState(false);
+  const [newLimit, setNewLimit] = useState({ app: "", minutes: 15 });
+
+  // Load app limits and usage stats when entering tab
+  const fetchLimitsAndUsage = async () => {
+    setLoadingAppLimits(true);
+    try {
+      const limitsData = await ScreenTimePlugin.getScreenTimeLimits();
+      setAppLimits(limitsData || {});
+    } catch {
+      setAppLimits({});
+    }
+    try {
+      const stats = await ScreenTimePlugin.getAppUsageStats({ date: todayStr() });
+      const usage: { [pkg: string]: number } = {};
+      if (stats && Array.isArray(stats.apps)) {
+        stats.apps.forEach((app: { package: string, minutes: number }) => {
+          usage[app.package] = app.minutes;
+        });
+      }
+      setUsageStats(usage);
+    } catch {
+      setUsageStats({});
+    }
+    setLoadingAppLimits(false);
+  };
+
+  // Only load on first render of tab
+  const [hasLoadedPenalties, setHasLoadedPenalties] = useState(false);
+
+  // Used for controlled switching tabs to perform fetching only when entering penalties tab:
+  const [visibleTab, setVisibleTab] = useState<string>("reminders");
+
+  React.useEffect(() => {
+    if (visibleTab === "penalties" && !hasLoadedPenalties) {
+      fetchLimitsAndUsage();
+      setHasLoadedPenalties(true);
+    }
+  }, [visibleTab, hasLoadedPenalties]);
+
+  // Add, update, remove app limits
+  const handleUpdateLimit = async (app: string, minutes: number) => {
+    await ScreenTimePlugin.setScreenTimeLimit({ app, minutes });
+    fetchLimitsAndUsage();
+  };
+  const handleDeleteLimit = async (app: string) => {
+    await ScreenTimePlugin.setScreenTimeLimit({ app, minutes: 0 }); // 0 = remove
+    fetchLimitsAndUsage();
+  };
+  const handleAddLimit = async () => {
+    if (!newLimit.app || newLimit.minutes <= 0) return;
+    await ScreenTimePlugin.setScreenTimeLimit(newLimit);
+    setNewLimit({ app: "", minutes: 15 });
+    fetchLimitsAndUsage();
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
@@ -101,12 +173,13 @@ const Settings = () => {
           </div>
 
           <div className="bg-white rounded-xl shadow-lg border border-gray-100">
-            <Tabs defaultValue="reminders" className="p-6">
-              <TabsList className="grid w-full grid-cols-4">
+            <Tabs value={visibleTab} onValueChange={(tab) => setVisibleTab(tab)} className="p-6">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="reminders">Reminders</TabsTrigger>
                 <TabsTrigger value="rewards">Rewards</TabsTrigger>
                 <TabsTrigger value="punishments">Punishments</TabsTrigger>
                 <TabsTrigger value="points">Points</TabsTrigger>
+                <TabsTrigger value="penalties">App Penalties</TabsTrigger>
               </TabsList>
 
               <TabsContent value="reminders" className="space-y-6">
@@ -325,6 +398,94 @@ const Settings = () => {
                   </div>
                 </div>
               </TabsContent>
+
+              {/* NEW App Penalties Tab */}
+              <TabsContent value="penalties" className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold">App Time Limits & Penalties</h3>
+                  <p className="text-gray-500 mb-4 text-sm">
+                    Control per-app daily time limits. When you exceed a limit, the app issues a penalty automatically. Edits here sync directly with your device.
+                  </p>
+                  <Button onClick={fetchLimitsAndUsage} size="sm" className="mb-2">Refresh Data</Button>
+                  {loadingAppLimits ? (
+                    <div className="text-center py-8 text-gray-500">Loading app limits…</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {Object.keys(appLimits).length === 0 && (
+                        <div className="text-sm text-gray-600 italic py-4">No app time limits set yet.</div>
+                      )}
+                      {Object.entries(appLimits).map(([app, minutes]) => (
+                        <div key={app} className="p-4 rounded border flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 bg-zinc-50">
+                          <div className="flex-1">
+                            <div className="font-mono pb-1">{app}</div>
+                            <div className="text-xs text-gray-600">
+                              Today's usage:{" "}
+                              <span className={(usageStats[app] ?? 0) > minutes ? "text-red-600 font-bold" : "text-green-800"}>
+                                {usageStats[app] ?? 0} / {minutes} min
+                              </span>
+                              {(usageStats[app] ?? 0) > minutes && (
+                                <span className="ml-2 text-xs text-red-500">
+                                  (+{(usageStats[app] ?? 0) - minutes} over)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            <Input
+                              type="number"
+                              min={1}
+                              value={minutes}
+                              onChange={e =>
+                                handleUpdateLimit(app, Math.max(1, parseInt(e.target.value) || 1))
+                              }
+                              className="w-24"
+                            />
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleDeleteLimit(app)}
+                              size="sm"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      {/* Add new app limit */}
+                      <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                        <Input
+                          placeholder="App package name"
+                          value={newLimit.app}
+                          onChange={e => setNewLimit(l => ({ ...l, app: e.target.value }))}
+                          className="sm:max-w-xs"
+                        />
+                        <Input
+                          type="number"
+                          min={1}
+                          placeholder="Daily minutes"
+                          value={newLimit.minutes}
+                          onChange={e => setNewLimit(l => ({ ...l, minutes: Math.max(1, +e.target.value) }))}
+                          className="sm:w-28"
+                        />
+                        <Button
+                          onClick={handleAddLimit}
+                          size="sm"
+                          className="shrink-0"
+                          disabled={!newLimit.app || newLimit.minutes < 1}
+                        >
+                          Add App Limit
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 rounded mt-6 text-blue-800 text-sm">
+                    <div>
+                      You may need to grant usage stats permission on your phone for this feature to work.<br />
+                      The penalty system applies automatically if you exceed your set limits.
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
             </Tabs>
           </div>
         </main>
