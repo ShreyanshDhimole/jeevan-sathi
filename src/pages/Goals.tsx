@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -48,11 +47,14 @@ const Goals = () => {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const addGoal = () => {
-    if (newGoal.trim() !== "") {
+  // New: handle addGoal via form submit
+  const handleAddGoal = (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) e.preventDefault();
+    const trimmedGoal = newGoal.trim();
+    if (trimmedGoal !== "") {
       const newGoalItem: Goal = {
         id: Date.now().toString(),
-        title: newGoal,
+        title: trimmedGoal,
         progress: 0,
         subGoals: [],
         timerState: {
@@ -61,11 +63,11 @@ const Goals = () => {
           currentTime: 0,
         },
       };
-      setGoals([...goals, newGoalItem]);
+      setGoals((prevGoals) => [...prevGoals, newGoalItem]);
       setNewGoal("");
       toast({
         title: "Goal Added! 🎯",
-        description: `"${newGoal}" has been added to your goals.`,
+        description: `"${trimmedGoal}" has been added to your goals.`,
       });
     }
   };
@@ -247,24 +249,28 @@ const Goals = () => {
             </div>
           </div>
 
-          <div className="mb-6 flex items-center gap-4">
+          {/* UPDATE: Wrap input/button in a form to handle enter AND button click */}
+          <form
+            className="mb-6 flex items-center gap-4"
+            onSubmit={handleAddGoal}
+          >
             <Input
               type="text"
               placeholder="Add a new goal..."
               value={newGoal}
               onChange={(e) => setNewGoal(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  addGoal();
-                }
-              }}
               className="flex-1"
+              // Enter key on input will submit form
             />
-            <Button onClick={addGoal} className="whitespace-nowrap">
+            <Button
+              type="submit"
+              className="whitespace-nowrap"
+              disabled={newGoal.trim().length === 0}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add New Goal
             </Button>
-          </div>
+          </form>
 
           <div className="space-y-4">
             {goals.map((goal) => (
