@@ -1,159 +1,157 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Check, CalendarCheck, MessageSquare, Plus, ArrowDown, ArrowUp } from "lucide-react";
-
-const mockData = {
-  routine: [
-    { time: "7:00", label: "Wake up", completed: true },
-    { time: "7:15", label: "Naam Jaap", completed: false },
-    { time: "7:40", label: "Shower", completed: false },
-    { time: "8:00", label: "Start Work", completed: false },
-  ],
-  tasks: [
-    { category: "Work", label: "Finish project report", completed: false },
-    { category: "Personal", label: "Call Tanu re: Aadhaar", completed: true },
-    { category: "Spiritual", label: "Evening Naam Jaap", completed: false },
-  ],
-  goals: [
-    {
-      label: "Learn Python",
-      target: "30 days",
-      progress: 0.66,
-      streak: 6,
-      catchUp: "You’re on track!",
-    },
-    {
-      label: "Lose 5kg",
-      target: "2 months",
-      progress: 0.43,
-      streak: 2,
-      catchUp: "You’re 3 days behind, do 90 mins today.",
-    },
-  ],
-  points: 320,
-  rewards: [
-    "Watch a movie tonight",
-    "Order Pizza",
-  ],
-  punishments: [
-    "No Instagram tomorrow",
-    "Cold shower next day",
-  ],
-};
+import { Clock, Target, Gift, TrendingUp, Calendar, CheckCircle2, Star, Zap } from "lucide-react";
 
 export function DashboardTiles() {
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
-      {/* Routine Card */}
-      <Card className="col-span-1 animate-fade-in">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarCheck size={20} />
-            Today's Routine
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2">
-            {mockData.routine.map((item) => (
-              <li key={item.time} className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <span className="text-muted-foreground w-12">{item.time}</span>
-                  <span className={item.completed ? "line-through text-muted-foreground" : ""}>{item.label}</span>
-                </div>
-                <button
-                  className={`rounded-full border w-8 h-8 flex items-center justify-center transition-colors ${item.completed ? "bg-green-50 border-green-300" : "hover:bg-accent"}`}
-                  title={item.completed ? "Done" : "Mark as done"}
-                >
-                  <Check size={18} className={item.completed ? "text-green-600" : "text-muted-foreground"} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-      {/* Tasks Card */}
-      <Card className="col-span-1 animate-fade-in">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus size={20} />
-            Today's Tasks
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2">
-            {mockData.tasks.map((task) => (
-              <li key={task.label} className="flex items-center justify-between group">
-                <div>
-                  <span className="text-xs px-2 py-0.5 mr-2 rounded bg-secondary">{task.category}</span>
-                  <span className={task.completed ? "line-through text-muted-foreground" : ""}>{task.label}</span>
-                </div>
-                <button
-                  className={`rounded-full border w-8 h-8 flex items-center justify-center transition-colors ${task.completed ? "bg-blue-50 border-blue-300" : "hover:bg-accent"}`}
-                  title={task.completed ? "Done" : "Mark as done"}
-                >
-                  <Check size={18} className={task.completed ? "text-blue-600" : "text-muted-foreground"} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-      {/* Goals/Progress Card */}
-      <Card className="col-span-1 xl:row-span-2 animate-fade-in">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ArrowUp size={20} />
-            Goal Progress
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {mockData.goals.map((goal) => (
-              <div key={goal.label} className="p-2 rounded-md border bg-muted/30">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <span className="font-medium">{goal.label}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">({goal.target})</span>
-                  </div>
-                  <span className="text-xs px-2 py-0.5 rounded bg-accent">{goal.streak}d streak</span>
-                </div>
-                <Progress value={goal.progress * 100} className="h-2 my-2 bg-accent/40" />
-                <span className="block text-xs mt-1 text-muted-foreground">{goal.catchUp}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      {/* Points/Rewards Card */}
-      <Card className="col-span-1 animate-fade-in">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare size={20} />
-            Points & Rewards
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-2">
-            <span className="text-4xl font-extrabold text-primary">{mockData.points}</span> <span className="text-muted-foreground">pts</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <div className="font-semibold text-xs mb-1">Rewards</div>
-              <ul className="list-disc ml-4 space-y-1 text-green-600">
-                {mockData.rewards.map(r => <li key={r}>{r}</li>)}
-              </ul>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+      {/* Today's Routine - Enhanced */}
+      <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+              <Clock className="h-6 w-6" />
             </div>
-            <div>
-              <div className="font-semibold text-xs mb-1">Punishments</div>
-              <ul className="list-disc ml-4 space-y-1 text-red-500">
-                {mockData.punishments.map(p => <li key={p}>{p}</li>)}
-              </ul>
+            <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
+              5/8 Done
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <h3 className="text-xl font-bold mb-2">Today's Routine</h3>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+              <span className="text-sm opacity-90">Current: Work Session</span>
+            </div>
+            <div className="text-xs opacity-75">Next: Lunch Break (12:30 PM)</div>
+          </div>
+          <div className="mt-4 bg-white/20 rounded-full h-2">
+            <div className="bg-white h-2 rounded-full w-5/8 transition-all duration-500"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Tasks - Enhanced */}
+      <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
+              3 Left
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-4">Quick Tasks</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 p-2 bg-white/10 rounded-xl">
+              <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full"></div>
+              <span className="text-sm flex-1">Call dentist</span>
+            </div>
+            <div className="flex items-center gap-3 p-2 bg-white/10 rounded-xl">
+              <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full"></div>
+              <span className="text-sm flex-1">Buy groceries</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Goal Progress - Enhanced */}
+      <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-500 via-violet-600 to-purple-700 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+              <Target className="h-6 w-6" />
+            </div>
+            <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
+              75%
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-2">Learn Python</h3>
+          <div className="text-sm opacity-90 mb-4">22 of 30 days completed</div>
+          <div className="bg-white/20 rounded-full h-3 mb-2">
+            <div className="bg-gradient-to-r from-yellow-300 to-orange-300 h-3 rounded-full w-3/4 transition-all duration-500 shadow-sm"></div>
+          </div>
+          <div className="text-xs opacity-75">8 days remaining</div>
+        </div>
+      </div>
+
+      {/* Points & Rewards - Enhanced */}
+      <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-amber-600 to-yellow-600 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+              <Star className="h-6 w-6" />
+            </div>
+            <div className="flex items-center gap-1 text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
+              <Zap className="h-3 w-3" />
+              +15
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-2">1,250 Points</h3>
+          <div className="text-sm opacity-90 mb-4">Streak: 7 days 🔥</div>
+          <div className="space-y-2">
+            <div className="text-xs opacity-75">Next reward at 1,500 pts</div>
+            <div className="bg-white/20 rounded-full h-2">
+              <div className="bg-white h-2 rounded-full w-4/5 transition-all duration-500"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Smart Reminders - Enhanced */}
+      <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-pink-500 via-rose-600 to-red-600 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+              <Calendar className="h-6 w-6" />
+            </div>
+            <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
+              2 Active
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-4">Smart Reminders</h3>
+          <div className="space-y-2">
+            <div className="p-2 bg-white/10 rounded-xl">
+              <div className="text-sm font-medium">Dadi ki medicine</div>
+              <div className="text-xs opacity-75">Today 6:00 PM</div>
+            </div>
+            <div className="p-2 bg-white/10 rounded-xl">
+              <div className="text-sm font-medium">Aadhaar card</div>
+              <div className="text-xs opacity-75">Tomorrow</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Weekly Progress - Enhanced */}
+      <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+              <TrendingUp className="h-6 w-6" />
+            </div>
+            <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
+              +12%
+            </div>
+          </div>
+          <h3 className="text-xl font-bold mb-2">Weekly Progress</h3>
+          <div className="text-sm opacity-90 mb-4">You're improving! 🚀</div>
+          <div className="flex items-end gap-1 h-12">
+            {[40, 60, 45, 80, 65, 90, 75].map((height, i) => (
+              <div
+                key={i}
+                className="bg-white/30 rounded-t flex-1 transition-all duration-500 hover:bg-white/50"
+                style={{ height: `${height}%` }}
+              ></div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-

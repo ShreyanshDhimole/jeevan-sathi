@@ -9,13 +9,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { MessageSquare, Check, Clock, CalendarPlus, ArrowUp, ArrowDown } from "lucide-react";
+import { LayoutDashboard, Clock, CheckSquare, Target, Gift, TrendingUp, Sparkles } from "lucide-react";
 
 const items = [
   {
     title: "Dashboard",
     url: "/",
-    icon: MessageSquare,
+    icon: LayoutDashboard,
+    active: true,
   },
   {
     title: "Routine",
@@ -25,42 +26,54 @@ const items = [
   {
     title: "Tasks",
     url: "#",
-    icon: Check,
+    icon: CheckSquare,
   },
   {
     title: "Goals",
     url: "#",
-    icon: ArrowUp,
+    icon: Target,
   },
   {
     title: "Rewards",
     url: "#",
-    icon: CalendarPlus,
+    icon: Gift,
   },
   {
     title: "Insights",
     url: "#",
-    icon: ArrowDown,
+    icon: TrendingUp,
   },
 ];
 
 export function AppSidebar() {
   return (
-    <Sidebar>
-      <SidebarContent>
+    <Sidebar className="border-r border-gray-200/50">
+      <SidebarContent className="bg-gradient-to-b from-white to-gray-50/50">
         <SidebarGroup>
-          <SidebarGroupLabel>Jeevan Sathi</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+              <Sparkles className="h-4 w-4 text-white" />
+            </div>
+            Jeevan Sathi
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={item.active}
+                    className="group relative rounded-xl transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 data-[active=true]:bg-gradient-to-r data-[active=true]:from-blue-500 data-[active=true]:to-purple-600 data-[active=true]:text-white data-[active=true]:shadow-lg"
+                  >
                     <a
                       href={item.url}
-                      className="flex items-center gap-2 px-3 py-2 rounded hover:bg-accent transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors"
                     >
-                      <item.icon size={20} />
+                      <item.icon className="h-5 w-5" />
                       <span className="font-medium">{item.title}</span>
+                      {item.active && (
+                        <div className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      )}
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -68,6 +81,18 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        <div className="absolute bottom-4 left-4 right-4">
+          <div className="p-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-200/50">
+            <div className="text-xs text-gray-600 mb-1">Today's Progress</div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full w-3/4"></div>
+              </div>
+              <span className="text-xs font-medium text-gray-700">75%</span>
+            </div>
+          </div>
+        </div>
       </SidebarContent>
     </Sidebar>
   );
