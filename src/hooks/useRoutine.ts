@@ -149,25 +149,25 @@ export function useRoutine() {
     }));
   };
 
+  // Only update routineItems array for status, not add or remove.
   const triggerAutoRecalibration = () => {
     const now = new Date();
-    const allItems = getUnifiedRoutineItems();
-    const updated = allItems.map(item => {
-      if (item.status === 'completed') return item;
-      const [time, period] = item.time.split(' ');
-      const [hour, minute] = time.split(':').map(Number);
-      const itemHour = period === 'PM' && hour !== 12 ? hour + 12 : (period === 'AM' && hour === 12 ? 0 : hour);
-      const itemTime = itemHour * 60 + minute;
-      const nowTime = now.getHours() * 60 + now.getMinutes();
-      if (item.status === 'upcoming' && nowTime > itemTime + 30) {
-        return { ...item, status: 'missed' as const };
-      }
-      if (item.status === 'upcoming' && nowTime >= itemTime - 15 && nowTime <= itemTime + 15) {
-        return { ...item, status: 'current' as const };
-      }
-      return item;
-    });
-    setRoutineItems(updated.filter(i => !i.id.startsWith("tasktab-")));
+    setRoutineItems(prev =>
+      prev.map(item => {
+        const [time, period] = item.time.split(' ');
+        const [hour, minute] = time.split(':').map(Number);
+        const itemHour = period === 'PM' && hour !== 12 ? hour + 12 : (period === 'AM' && hour === 12 ? 0 : hour);
+        const itemTime = itemHour * 60 + minute;
+        const nowTime = now.getHours() * 60 + now.getMinutes();
+        if (item.status === 'upcoming' && nowTime > itemTime + 30) {
+          return { ...item, status: 'missed' as const };
+        }
+        if (item.status === 'upcoming' && nowTime >= itemTime - 15 && nowTime <= itemTime + 15) {
+          return { ...item, status: 'current' as const };
+        }
+        return item;
+      })
+    );
   };
 
   // --- Handlers ---
