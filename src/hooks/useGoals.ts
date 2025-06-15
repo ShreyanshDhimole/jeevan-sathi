@@ -42,6 +42,7 @@ export function useGoals() {
   useEffect(() => {
     try {
       localStorage.setItem("goals", JSON.stringify(goals));
+      console.log("useGoals: goals saved to localStorage:", goals); // DEBUG
     } catch (error) {
       toast.error("Could not save goals", {
         description:
@@ -52,6 +53,7 @@ export function useGoals() {
 
   const handleAddGoal = useCallback((goalTitle: string) => {
     const trimmed = goalTitle.trim();
+    console.log("useGoals: handleAddGoal called with:", trimmed); // DEBUG
     if (!trimmed) return;
     const newGoalItem: Goal = {
       id: Date.now().toString(),
@@ -64,7 +66,11 @@ export function useGoals() {
         currentTime: 0,
       },
     };
-    setGoals((prevGoals) => [...prevGoals, newGoalItem]);
+    setGoals((prevGoals) => {
+      const newGoals = [...prevGoals, newGoalItem];
+      console.log("useGoals: setGoals called, new goals state:", newGoals); // DEBUG
+      return newGoals;
+    });
     toast.success("Goal Added! 🎯", {
       description: `"${trimmed}" has been added to your goals.`,
     });

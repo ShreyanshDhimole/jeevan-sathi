@@ -11,10 +11,10 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
   const [inputValue, setInputValue] = useState("");
 
   const handleAdd = () => {
-    console.log("AddGoalForm: handleAdd triggered");
+    console.log("AddGoalForm: handleAdd triggered; inputValue:", inputValue); // DEBUG
     const trimmed = inputValue.trim();
     if (trimmed) {
-      console.log("AddGoalForm: Calling onAddGoal with:", trimmed);
+      console.log("AddGoalForm: Calling onAddGoal with:", trimmed); // DEBUG
       onAddGoal(trimmed);
       setInputValue("");
     } else {
@@ -39,7 +39,10 @@ const AddGoalForm: React.FC<AddGoalFormProps> = ({ onAddGoal }) => {
         className="flex-1"
       />
       <Button
-        onClick={handleAdd}
+        onClick={() => {
+          console.log("Button Clicked"); // DEBUG
+          handleAdd();
+        }}
         className="whitespace-nowrap"
         disabled={inputValue.trim().length === 0}
       >
