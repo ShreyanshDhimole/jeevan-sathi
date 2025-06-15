@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Clock, Plus, CheckCircle, AlertTriangle, RotateCcw, Star, Play, Trophy, Zap } from "lucide-react";
+import { Clock, Plus, CheckCircle, AlertTriangle, RotateCcw, Star, Play, Trophy, Zap, Calendar } from "lucide-react";
 import { AddTaskDialog } from "@/components/AddTaskDialog";
 import { RecalibrateDialog } from "@/components/RecalibrateDialog";
 import { UrgentTaskDialog } from "@/components/UrgentTaskDialog";
 import { TaskTracker } from "@/components/TaskTracker";
 import { ReminderSystem } from "@/components/ReminderSystem";
 import { StreakRewards } from "@/components/StreakRewards";
+import { RoutineCalendar } from "@/components/RoutineCalendar";
+import { TaskNotesModal } from "@/components/TaskNotesModal";
 import { RoutineItem, CompletionRecord, StreakReward } from "@/types/routine";
 import { recalibrateWithUrgentTask } from "@/utils/recalibrationLogic";
 import { useToast } from "@/hooks/use-toast";
@@ -69,7 +71,8 @@ const Routine = () => {
       completionHistory: [],
       duration: 90,
       compressible: true,
-      minDuration: 60
+      minDuration: 60,
+      dependsOn: '3'
     },
     { 
       id: '5', 
@@ -89,6 +92,8 @@ const Routine = () => {
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isRecalibrateOpen, setIsRecalibrateOpen] = useState(false);
   const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isTaskNotesOpen, setIsTaskNotesOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedTask, setSelectedTask] = useState<RoutineItem | null>(null);
   const [isTaskTrackerOpen, setIsTaskTrackerOpen] = useState(false);
@@ -140,7 +145,9 @@ const Routine = () => {
       flexible: newTask.flexible,
       points: newTask.points,
       streak: 0,
-      completionHistory: []
+      completionHistory: [],
+      duration: 60,
+      compressible: newTask.flexible
     };
 
     setRoutineItems(prev => [...prev, newRoutineItem].sort((a, b) => {
@@ -237,6 +244,10 @@ const Routine = () => {
     if (task.status === 'current' || task.status === 'in-progress') {
       setSelectedTask(task);
       setIsTaskTrackerOpen(true);
+    } else {
+      // Show notes for completed or other tasks
+      setSelectedTask(task);
+      setIsTaskNotesOpen(true);
     }
   };
 
@@ -306,6 +317,13 @@ const Routine = () => {
               <span className="text-lg font-semibold text-gray-800">Daily Routine</span>
             </div>
             <div className="ml-auto flex items-center gap-4">
+              <button 
+                onClick={() => setIsCalendarOpen(true)}
+                className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+              >
+                <Calendar className="h-4 w-4" />
+                Calendar
+              </button>
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-lg">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-4 w-4" />
@@ -420,6 +438,11 @@ const Routine = () => {
                             Compressible
                           </span>
                         )}
+                        {item.completionHistory.length > 0 && (
+                          <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
+                            {item.completionHistory.length} notes
+                          </span>
+                        )}
                       </div>
                     </div>
                     
@@ -477,7 +500,22 @@ const Routine = () => {
         upcomingTasks={routineItems.filter(item => item.status === 'upcoming')}
       />
 
-      {selectedTask && (
+      <RoutineCalendar
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+        routineItems={routineItems}
+      />
+
+      <TaskNotesModal
+        task={selectedTask}
+        isOpen={isTaskNotesOpen}
+        onClose={() => {
+          setIsTaskNotesOpen(false);
+          setSelectedTask(null);
+        }}
+      />
+
+      {selectedTask && isTaskTrackerOpen && (
         <TaskTracker
           task={selectedTask}
           isOpen={isTaskTrackerOpen}
