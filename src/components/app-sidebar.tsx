@@ -1,14 +1,5 @@
 
-import React from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
+import React, { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,21 +11,62 @@ import {
   SidebarMenuButton,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import {
-  Home,
-  Clock,
-  CheckSquare,
-  Target,
-  Gift,
-  AlertTriangle,
-  BarChart,
-  Bell,
-  Settings,
-  Navigation,
+import { 
+  Home, Clock, CheckSquare, Target, Gift, 
+  AlertTriangle, BarChart, Bell, Settings, 
+  Fingerprint
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+
+// User Profile Sidebar Panel
+function UserProfilePanel() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  // Placeholder: actual login not connected (needs backend)
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    window.alert(`Login attempted for user: ${username}`);
+  };
+  const handleFingerprint = () => {
+    window.alert("Fingerprint authentication not implemented in demo.");
+  };
+
+  return (
+    <form onSubmit={handleLogin} className="px-4 py-3 flex flex-col gap-2">
+      <Label htmlFor="username">Username</Label>
+      <Input
+        id="username"
+        value={username}
+        onChange={e => setUsername(e.target.value)}
+        placeholder="Enter username"
+        autoComplete="username"
+      />
+      <Label htmlFor="password">Password</Label>
+      <Input
+        id="password"
+        type="password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        placeholder="Enter password"
+        autoComplete="current-password"
+      />
+      <Button type="submit" className="mt-1 w-full">Login</Button>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full flex gap-2 justify-center items-center"
+        onClick={handleFingerprint}
+      >
+        <Fingerprint className="h-4 w-4" />
+        <span>Sign in with fingerprint</span>
+      </Button>
+    </form>
+  );
+}
 
 export function AppSidebar() {
   const location = useLocation();
@@ -52,85 +84,50 @@ export function AppSidebar() {
   ];
 
   return (
-    <div className="h-full">
-      {/* Menu Button as the SheetTrigger */}
-      <div className="flex items-center justify-start px-4 py-2">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="default" className="gap-2">
-              <Navigation className="w-5 h-5" />
-              <span className="font-medium text-base">Menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            <SheetHeader className="px-6 pb-4 pt-6">
-              <SheetTitle>Menu</SheetTitle>
-              <SheetDescription>
-                Navigate through your productivity tools.
-              </SheetDescription>
-            </SheetHeader>
-            <Separator />
-            <div className="flex flex-col gap-2 py-4">
+    <Sidebar>
+      <SidebarContent>
+        {/* Avatar at the very top */}
+        <div className="flex flex-col items-center py-4">
+          <Avatar className="h-14 w-14 border-2 border-accent shadow-md mb-2">
+            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarFallback>SC</AvatarFallback>
+          </Avatar>
+          <div className="text-sm font-semibold">Welcome!</div>
+        </div>
+        
+        {/* Profile Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>User Profile</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <UserProfilePanel />
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        {/* App Navigation */}
+        <SidebarSeparator />
+        <SidebarGroup>
+          <SidebarGroupLabel className="mt-1 mb-2 px-4 text-xs text-muted-foreground tracking-widest uppercase">
+            Jeevan Sathi
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
               {menuItems.map((item) => (
-                <NavLink
-                  key={item.title}
-                  to={item.url}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-6 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                      isActive
-                        ? "bg-accent text-accent-foreground"
-                        : "text-foreground"
-                    }`
-                  }
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.title}</span>
-                </NavLink>
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === item.url}
+                  >
+                    <NavLink to={item.url} className="flex items-center gap-3">
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               ))}
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-      {/* Avatar is just a static display */}
-      <div className="flex flex-col items-center justify-center pt-4 pb-2">
-        <Avatar className="h-14 w-14 border-2 border-accent shadow-lg">
-          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-          <AvatarFallback>SC</AvatarFallback>
-        </Avatar>
-        <div className="mt-2 text-base font-semibold">Welcome!</div>
-      </div>
-      {/* Desktop sidebar */}
-      <div className="hidden md:block">
-        <Sidebar>
-          <SidebarContent>
-            <SidebarGroup>
-              {/* This avatar/header is just display for desktop sidebar */}
-              <SidebarSeparator />
-              <SidebarGroupLabel className="mt-1 mb-2 px-4 text-xs text-muted-foreground tracking-widest uppercase">
-                Navigation
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={location.pathname === item.url}
-                      >
-                        <NavLink to={item.url} className="flex items-center gap-3">
-                          <item.icon className="h-5 w-5" />
-                          <span>{item.title}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-      </div>
-    </div>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   );
 }
-
