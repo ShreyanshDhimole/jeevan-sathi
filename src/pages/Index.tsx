@@ -14,6 +14,7 @@ import { useTasks } from "@/hooks/useTasks";
 
 // --- Routine data (Minimal, to demo dynamic) ---
 const ROUTINE_STORAGE_KEY = "user_routine";
+const REMINDER_STORAGE_KEY = "reminders_notes";
 
 const Index = () => {
   const [routineItems, setRoutineItems] = useState<RoutineItem[]>([]);
