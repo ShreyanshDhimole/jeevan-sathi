@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,20 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Trash, Edit, Clock, Play, Square, Plus } from "lucide-react";
 import type { SubGoal } from "@/hooks/useGoals";
+import { countSubGoals } from "@/utils/goalProgress";
 
 // Recursive progress calculation for sub-goals
-function countSubGoals(subGoals: SubGoal[]): { total: number; completed: number } {
-  return subGoals.reduce(
-    (acc, sg) => {
-      const inner = countSubGoals(sg.subGoals ?? []);
-      return {
-        total: acc.total + 1 + inner.total,
-        completed: acc.completed + (sg.isCompleted ? 1 : 0) + inner.completed,
-      };
-    },
-    { total: 0, completed: 0 }
-  );
-}
+// function countSubGoals(subGoals: SubGoal[]): { total: number; completed: number } {
+//   return subGoals.reduce(
+//     (acc, sg) => {
+//       const inner = countSubGoals(sg.subGoals ?? []);
+//       return {
+//         total: acc.total + 1 + inner.total,
+//         completed: acc.completed + (sg.isCompleted ? 1 : 0) + inner.completed,
+//       };
+//     },
+//     { total: 0, completed: 0 }
+//   );
+// }
 
 // Props same as before except recursive subgoals now supported!
 export interface GoalCardProps {

@@ -13,6 +13,7 @@ import { RoutineItem } from "@/types/routine";
 import { useTasks } from "@/hooks/useTasks";
 import { PointsButton } from "@/components/PointsButton";
 import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
+import { countSubGoals } from "@/utils/goalProgress";
 
 // --- Routine data (Minimal, to demo dynamic) ---
 const ROUTINE_STORAGE_KEY = "user_routine";
@@ -126,8 +127,14 @@ const Index = () => {
 
   // 3. Goal summary (first goal, fallback blank)
   const firstGoal = goals[0];
-  const completedDays = firstGoal?.subGoals.filter((sg) => sg.isCompleted).length ?? 0;
-  const totalDays = firstGoal?.subGoals.length ?? 0;
+  // Use recursive, accurate progress calculation!
+  let completedDays = 0;
+  let totalDays = 0;
+  if (firstGoal) {
+    const { total, completed } = countSubGoals(firstGoal.subGoals ?? []);
+    completedDays = completed;
+    totalDays = total;
+  }
   const percentDone = totalDays === 0 ? 0 : Math.floor((completedDays / totalDays) * 100);
   const goalSummary = {
     name: firstGoal?.title ?? "",
