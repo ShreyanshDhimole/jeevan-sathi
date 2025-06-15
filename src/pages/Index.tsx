@@ -10,6 +10,7 @@ import { useGoals } from "@/hooks/useGoals";
 import { ReminderNoteItem } from '@/types/reminders';
 import { useDayStart } from "@/hooks/useDayStart";
 import { RoutineItem } from "@/types/routine";
+import { useTasks } from "@/hooks/useTasks";
 
 // --- Routine data (Minimal, to demo dynamic) ---
 const DEMO_ROUTINE_ITEMS: RoutineItem[] = [
@@ -42,13 +43,10 @@ const DEMO_ROUTINE_ITEMS: RoutineItem[] = [
 
 const Index = () => {
   const [routineItems] = useState<RoutineItem[]>(DEMO_ROUTINE_ITEMS);
-  const [tasks, setTasks] = useState([
-    { id: '1', task: "Complete project proposal", priority: "high", completed: false, starred: false },
-    { id: '2', task: "Call insurance company", priority: "medium", completed: true, starred: false },
-    { id: '3', task: "Buy groceries", priority: "low", completed: false, starred: true },
-    { id: '4', task: "Schedule dentist appointment", priority: "medium", completed: false, starred: false },
-    { id: '5', task: "Review team feedback", priority: "high", completed: true, starred: true },
-  ]);
+
+  // Replace separate local tasks state with useTasks hook
+  const { tasks } = useTasks();
+
   const [reminders, setReminders] = useState<ReminderNoteItem[]>([
     {
       id: 'r1',

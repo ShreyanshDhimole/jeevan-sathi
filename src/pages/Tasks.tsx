@@ -1,55 +1,14 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { CheckSquare, Plus, Star, Trash2, Edit } from "lucide-react";
+import { CheckSquare, Plus, Star, Trash2 } from "lucide-react";
 import { AddTaskDialog } from "@/components/AddTaskDialog";
-
-interface Task {
-  id: string;
-  task: string;
-  priority: 'high' | 'medium' | 'low';
-  completed: boolean;
-  starred: boolean;
-}
+import { useTasks } from "@/hooks/useTasks";
 
 const Tasks = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: '1', task: "Complete project proposal", priority: "high", completed: false, starred: false },
-    { id: '2', task: "Call insurance company", priority: "medium", completed: true, starred: false },
-    { id: '3', task: "Buy groceries", priority: "low", completed: false, starred: true },
-    { id: '4', task: "Schedule dentist appointment", priority: "medium", completed: false, starred: false },
-    { id: '5', task: "Review team feedback", priority: "high", completed: true, starred: true },
-  ]);
-
-  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-
-  const toggleComplete = (id: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
-  };
-
-  const toggleStar = (id: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, starred: !task.starred } : task
-    ));
-  };
-
-  const deleteTask = (id: string) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
-  };
-
-  const addTask = (newTask: { task: string; priority: 'high' | 'medium' | 'low'; preferredTime: string; flexible: boolean }) => {
-    const task: Task = {
-      id: Date.now().toString(),
-      task: newTask.task,
-      priority: newTask.priority,
-      completed: false,
-      starred: false
-    };
-    setTasks(prev => [...prev, task]);
-  };
+  const { tasks, addTask, deleteTask, toggleComplete, toggleStar } = useTasks();
+  const [isAddTaskOpen, setIsAddTaskOpen] = React.useState(false);
 
   const getTaskStats = () => {
     const total = tasks.length;
