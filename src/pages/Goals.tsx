@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 // New imports for refactoring:
 import AddGoalForm from "@/components/goals/AddGoalForm";
 import GoalList from "@/components/goals/GoalList";
+import { formatTime } from "@/utils/formatTime";
 
 interface Goal {
   id: string;
@@ -36,16 +37,6 @@ const Goals = () => {
   useEffect(() => {
     localStorage.setItem("goals", JSON.stringify(goals));
   }, [goals]);
-
-  // Helper to format seconds to HH:MM:SS
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
 
   // Add goal handler
   const handleAddGoal = React.useCallback(
