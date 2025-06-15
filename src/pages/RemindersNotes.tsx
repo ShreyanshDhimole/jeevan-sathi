@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -17,6 +17,7 @@ export default function RemindersNotes() {
   const [items, setItems] = useState<ReminderNoteItem[]>([]);
   const [tab, setTab] = useState<"reminders" | "notes">("reminders");
   const { toast } = useToast();
+  const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem(REMINDER_STORAGE_KEY);
@@ -27,18 +28,24 @@ export default function RemindersNotes() {
     localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const handleAddReminder = (reminder: Omit<ReminderNoteItem, "id" | "createdAt" | "type"> & { category: ReminderCategory }) => {
+  const handleAddReminder = (
+    reminder: Omit<ReminderNoteItem, "id" | "createdAt" | "type" | "alarmSent"> &
+      { category: ReminderCategory; time?: string }
+  ) => {
     const newItem: ReminderNoteItem = {
       id: Date.now().toString(),
       type: "reminder",
       ...reminder,
       createdAt: new Date().toISOString(),
+      alarmSent: false,
     };
     setItems((prev) => [...prev, newItem]);
     toast({ title: "Reminder Added", description: newItem.title });
   };
 
-  const handleAddNote = (note: Omit<ReminderNoteItem, "id" | "createdAt" | "type"> & { category: NoteCategory }) => {
+  const handleAddNote = (
+    note: Omit<ReminderNoteItem, "id" | "createdAt" | "type" | "alarmSent"> & { category: NoteCategory }
+  ) => {
     const newItem: ReminderNoteItem = {
       id: Date.now().toString(),
       type: "note",
@@ -53,6 +60,48 @@ export default function RemindersNotes() {
     setItems((prev) => prev.filter((item) => item.id !== id));
     toast({ title: "Item Deleted" });
   };
+
+  // In-app alarm for general reminders at given date & time
+  useEffect(() => {
+    if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
+    alarmIntervalRef.current = setInterval(() => {
+      const now = new Date();
+      setItems((currItems) =>
+        currItems.map((item) => {
+          if (
+            item.type === "reminder" &&
+            item.category === "general-reminders" &&
+            item.date &&
+            item.time &&
+            !item.alarmSent
+          ) {
+            const [h, m] = item.time.split(":");
+            const reminderDate = new Date(item.date);
+            reminderDate.setHours(parseInt(h, 10), parseInt(m, 10), 0, 0);
+
+            // If time is now (within this minute) and today or in the past
+            if (
+              Math.abs(reminderDate.getTime() - now.getTime()) < 60000 &&
+              now >= reminderDate
+            ) {
+              toast({
+                title: "Reminder Alarm ⏰",
+                description: `"${item.title}" is scheduled for now.`,
+                duration: 10000,
+              });
+              return { ...item, alarmSent: true };
+            }
+          }
+          return item;
+        })
+      );
+    }, 30000); // Check every 30s
+    return () => {
+      if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
+    };
+    // Only rerun when items/ toast changes!
+    // eslint-disable-next-line
+  }, [toast]);
 
   return (
     <SidebarProvider>

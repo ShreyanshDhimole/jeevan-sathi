@@ -9,7 +9,9 @@ export interface ReminderNoteItem {
   content: string;
   category: ReminderCategory | NoteCategory;
   date?: string; // ISO for reminders
+  time?: string; // hh:mm for general reminders
   author?: string; // for quotes
   status?: string; // for books/movies
   createdAt: string;
+  alarmSent?: boolean; // Only for general reminders
 }
