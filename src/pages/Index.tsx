@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { DashboardTiles } from "@/components/DashboardTiles";
@@ -9,8 +9,6 @@ import { UrgentTaskDialog } from "@/components/UrgentTaskDialog";
 import { Calendar, Zap } from "lucide-react";
 // Import hooks/modules for real data:
 import { useGoals } from "@/hooks/useGoals";
-// Task data here is local state for demo; in real app, probably context/hook:
-import React, { useEffect } from "react";
 import { ReminderNoteItem } from '@/types/reminders';
 
 const Index = () => {
@@ -21,7 +19,7 @@ const Index = () => {
       id: '1',
       time: "6:00 AM",
       task: "Naam Jaap",
-      status: "completed" as const,
+      status: "completed" as const, // Only status: "completed" in stub
       priority: "high" as const,
       flexible: true,
       points: 75,
@@ -90,6 +88,7 @@ const Index = () => {
   // Find total + completed. Show current/next.
   const routineTotal = routineItems.length;
   const routineCompleted = routineItems.filter((r) => r.status === 'completed').length;
+  // As routineItems doesn't have current/upcoming in stub, these will always be undefined
   const current = routineItems.find((r) => r.status === 'current');
   const next = routineItems.find((r) => r.status === 'upcoming');
   const routineSummary = {
@@ -136,7 +135,7 @@ const Index = () => {
   const remindersDashboard = reminders.slice(0,5).map((r) => ({
     id: r.id,
     label: r.title,
-    time: r.time || r.date ? new Date(r.date as string).toLocaleDateString() : "",
+    time: r.time || (r.date ? new Date(r.date as string).toLocaleDateString() : ""),
   }));
 
   // 6. Weekly - demo, calculate percent change from previous
@@ -232,4 +231,3 @@ const Index = () => {
 };
 
 export default Index;
-
