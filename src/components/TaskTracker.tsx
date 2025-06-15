@@ -1,12 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Star, Play, Square, CheckCircle, Clock } from 'lucide-react';
-import { RoutineItem, CompletionRecord } from '@/types/routine';
+import { RoutineItem } from '@/types/routine';
 import { useToast } from '@/hooks/use-toast';
+
+// Fix: Define TaskTrackerProps according to usage in Routine.tsx
+interface TaskTrackerProps {
+  task: RoutineItem;
+  isOpen: boolean;
+  onClose: () => void;
+  onComplete: (taskId: string, quality: number, notes: string, duration: number) => void;
+  onStart: (taskId: string) => void;
+}
 
 // Helper type for breaks
 type BreakType = "short" | "medium" | "long";
@@ -188,19 +196,19 @@ export const TaskTracker = ({ task, isOpen, onClose, onComplete, onStart }: Task
   // --- MAIN UI ---
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md w-full max-w-[95vw] !p-0 overflow-visible"> {/* Fixed padding and allow full width on small screens */}
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 px-6 pt-6">
             <CheckCircle className="h-5 w-5 text-green-600" />
             {task.task}
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
+        <div className="space-y-4 px-6 pb-6 flex flex-col">
+          <div className="bg-blue-50 p-4 rounded-lg w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
               <span className="text-sm font-medium text-blue-800">Task Details</span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                   {task.points} pts
                 </span>
@@ -209,8 +217,9 @@ export const TaskTracker = ({ task, isOpen, onClose, onComplete, onStart }: Task
                 </span>
               </div>
             </div>
-            <div className="text-sm text-blue-600">
-              Scheduled: {task.time} | Priority: {task.priority}
+            <div className="text-sm text-blue-600 flex flex-wrap gap-2">
+              <span>Scheduled: {task.time}</span>
+              <span>| Priority: {task.priority}</span>
             </div>
             <div className="text-xs text-gray-500">
               {task.duration ? `Duration: ${task.duration} min` : "No timer for this task"}
@@ -226,7 +235,7 @@ export const TaskTracker = ({ task, isOpen, onClose, onComplete, onStart }: Task
 
           {isRunning && !isOnBreak && (
             <div className="space-y-4">
-              <div className="bg-green-50 p-4 rounded-lg text-center">
+              <div className="bg-green-50 p-4 rounded-lg text-center w-full">
                 <Clock className="h-8 w-8 text-green-600 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-green-800">{formatTime(duration)}</div>
                 <div className="text-sm text-green-600">Task in progress...</div>
@@ -235,15 +244,18 @@ export const TaskTracker = ({ task, isOpen, onClose, onComplete, onStart }: Task
               {/* BREAK BUTTON */}
               <div>
                 <Label>Need a break?</Label>
-                <div className="flex gap-2 mt-1">
+                <div className="flex flex-wrap gap-2 mt-1 items-center">
                   {BREAK_PRESETS.map(b => (
-                    <Button key={b.type} 
-                      variant={breakType === b.type ? "default" : "outline"} 
-                      onClick={() => setBreakType(b.type)}>
+                    <Button
+                      key={b.type}
+                      variant={breakType === b.type ? "default" : "outline"}
+                      onClick={() => setBreakType(b.type)}
+                      className="flex-1 min-w-[110px]"
+                    >
                       {b.label}
                     </Button>
                   ))}
-                  <Button onClick={handleStartBreak} className="ml-2">
+                  <Button onClick={handleStartBreak} className="flex-1 min-w-[110px]">
                     <Square className="h-4 w-4 mr-1" />
                     Start Break
                   </Button>
@@ -252,12 +264,14 @@ export const TaskTracker = ({ task, isOpen, onClose, onComplete, onStart }: Task
 
               <div>
                 <Label>How did you perform? (Quality)</Label>
-                <div className="flex items-center gap-1 mt-2">
+                <div className="flex items-center gap-1 mt-2 flex-wrap">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       onClick={() => setQuality(star)}
                       className="p-1"
+                      type="button"
+                      tabIndex={0}
                     >
                       <Star 
                         className={`h-6 w-6 ${
@@ -280,10 +294,11 @@ export const TaskTracker = ({ task, isOpen, onClose, onComplete, onStart }: Task
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="How did it go? Any insights or challenges?"
                   rows={3}
+                  className="w-full resize-none min-h-[64px] max-h-[140px]"
                 />
               </div>
 
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-4 flex-col sm:flex-row">
                 <Button variant="outline" onClick={onClose} className="flex-1">
                   Continue Later
                 </Button>
@@ -298,7 +313,7 @@ export const TaskTracker = ({ task, isOpen, onClose, onComplete, onStart }: Task
           {/* BREAK TIMER UI */}
           {isOnBreak && (
             <div className="space-y-4">
-              <div className="bg-yellow-50 p-4 rounded-lg text-center">
+              <div className="bg-yellow-50 p-4 rounded-lg text-center w-full">
                 <Clock className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-yellow-800">{formatTime(breakTimer)}</div>
                 <div className="text-sm text-yellow-600">
@@ -314,7 +329,7 @@ export const TaskTracker = ({ task, isOpen, onClose, onComplete, onStart }: Task
 
           {/* Overview of breaks in this session */}
           {breakCount > 0 && (
-            <div className="text-xs text-gray-700 bg-gray-50 p-2 rounded mt-3">
+            <div className="text-xs text-gray-700 bg-gray-50 p-2 rounded mt-3 max-h-[160px] overflow-y-auto">
               <div>
                 Breaks taken: <b>{breakCount}</b> | Total break time: <b>{formatTime(breakTime)}</b>
               </div>
@@ -332,4 +347,3 @@ export const TaskTracker = ({ task, isOpen, onClose, onComplete, onStart }: Task
     </Dialog>
   );
 };
-
