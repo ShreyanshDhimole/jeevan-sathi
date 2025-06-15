@@ -22,9 +22,8 @@ export function DashboardTiles({ dashboardConfig }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
       {dashboardConfig.map((card) => {
-        const CardIcon = iconMap[card.icon] || Calendar; // fallback
+        const CardIcon = iconMap[card.icon] || Calendar;
         const data = card.getData();
-
         switch (card.key) {
           case "points":
             return (
@@ -155,8 +154,8 @@ export function DashboardTiles({ dashboardConfig }) {
                     ></div>
                   </div>
                   <div className="text-xs opacity-75">
-                    {/* Show number of items left */}
-                    Items left: <span className="font-bold">{data.incompleteItems}</span>
+                    {/* Show number of modules left */}
+                    Modules left: <span className="font-bold">{data.incompleteItems}</span>
                   </div>
                 </div>
               </div>
