@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,8 @@ interface AddTaskDialogProps {
     preferredTime: string;
     flexible: boolean;
     points: number;
+    duration: number;
+    description: string;
   }) => void;
 }
 
@@ -27,16 +28,19 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
   const [flexible, setFlexible] = useState(true);
   const [description, setDescription] = useState("");
   const [points, setPoints] = useState([50]);
+  const [duration, setDuration] = useState(""); // New: duration in minutes
 
   const handleSubmit = () => {
-    if (!taskName.trim() || !preferredTime) return;
+    if (!taskName.trim() || !preferredTime || !duration || isNaN(Number(duration)) || Number(duration) <= 0) return;
 
     onAddTask({
       task: taskName,
       priority,
       preferredTime,
       flexible,
-      points: points[0]
+      points: points[0],
+      duration: Number(duration),
+      description,
     });
 
     // Reset form
@@ -46,6 +50,7 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
     setFlexible(true);
     setDescription("");
     setPoints([50]);
+    setDuration("");
     onClose();
   };
 
@@ -127,6 +132,21 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
           </div>
 
           <div>
+            <Label htmlFor="duration">Time Required (minutes)</Label>
+            <Input
+              id="duration"
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="e.g., 30"
+              min={1}
+              inputMode="numeric"
+              required
+            />
+            <span className="text-xs text-gray-500">Required. Must be a positive number.</span>
+          </div>
+
+          <div>
             <Label>Points System</Label>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -172,7 +192,9 @@ export const AddTaskDialog = ({ isOpen, onClose, onAddTask }: AddTaskDialogProps
             <Button variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="flex-1" disabled={!taskName.trim() || !preferredTime}>
+            <Button onClick={handleSubmit} className="flex-1" disabled={
+              !taskName.trim() || !preferredTime || !duration || isNaN(Number(duration)) || Number(duration) <= 0
+            }>
               Add Task
             </Button>
           </div>

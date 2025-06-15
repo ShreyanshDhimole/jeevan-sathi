@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 
 export interface Task {
@@ -7,6 +6,11 @@ export interface Task {
   priority: 'high' | 'medium' | 'low';
   completed: boolean;
   starred: boolean;
+  duration?: number; // New: task duration (minutes)
+  preferredTime?: string;
+  flexible?: boolean;
+  points?: number;
+  description?: string;
 }
 
 export function useTasks() {
@@ -40,13 +44,26 @@ export function useTasks() {
     } catch (e) {}
   }, [tasks]);
 
-  const addTask = (newTask: { task: string; priority: 'high'|'medium'|'low'; preferredTime?: string; flexible?: boolean }) => {
+  const addTask = (newTask: { 
+    task: string; 
+    priority: 'high'|'medium'|'low'; 
+    preferredTime?: string; 
+    flexible?: boolean;
+    points?: number;
+    duration?: number;
+    description?: string;
+  }) => {
     const t: Task = {
       id: Date.now().toString(),
       task: newTask.task,
       priority: newTask.priority,
       completed: false,
       starred: false,
+      duration: newTask.duration,
+      preferredTime: newTask.preferredTime,
+      flexible: newTask.flexible,
+      points: newTask.points,
+      description: newTask.description,
     };
     setTasks(prev => [...prev, t]);
   };
