@@ -55,12 +55,7 @@ const Goals = () => {
           currentTime: 0,
         },
       };
-      setGoals((prevGoals) => {
-        const newGoals = [...prevGoals, newGoalItem];
-        // Save to localStorage immediately for better reliability
-        localStorage.setItem("goals", JSON.stringify(newGoals));
-        return newGoals;
-      });
+      setGoals((prevGoals) => [...prevGoals, newGoalItem]);
       toast({
         title: "Goal Added! 🎯",
         description: `"${trimmed}" has been added to your goals.`,
