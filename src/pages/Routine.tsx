@@ -169,6 +169,14 @@ const Routine = () => {
     // If you want, you can also call any custom rescheduling logic here
   };
 
+  // For display: Only explicit routine items (NO Tasks tab items!)
+  const getDisplayRoutineItems = () => {
+    return [...routineItems].sort(
+      (a, b) => convertTimeToMinutes(a.time) - convertTimeToMinutes(b.time)
+    );
+  };
+
+  // For recalibration: Routine items + Tasks tab items
   const getUnifiedRoutineItems = () => {
     const taskTabItems = tasks
       .filter((t) => !routineItems.some((r) => r.task === t.task))
@@ -180,7 +188,7 @@ const Routine = () => {
           task: t.task,
           status: t.completed
             ? "completed"
-            : "upcoming", // strictly RoutineItem status
+            : "upcoming", // must match RoutineItem status type
           priority: t.priority,
           flexible: t.flexible ?? true,
           points: t.points ?? 25,
@@ -206,7 +214,7 @@ const Routine = () => {
     flexible: boolean;
     points: number;
     duration: number;
-    description: string;
+    // Removed: description
   }) => {
     const newId = (routineItems.length + 1).toString();
     const newRoutineItem: RoutineItem = {
@@ -219,10 +227,10 @@ const Routine = () => {
       points: newTask.points,
       streak: 0,
       completionHistory: [],
-      duration: newTask.duration ?? 30,  // always add duration
+      duration: newTask.duration ?? 30,
       compressible: newTask.flexible,
       minDuration: Math.max(15, Math.floor(newTask.duration * 0.5)),
-      description: newTask.description,
+      // description removed, it isn't part of RoutineItem type
     };
 
     setRoutineItems(prev => [...prev, newRoutineItem].sort((a, b) => {
@@ -437,7 +445,8 @@ const Routine = () => {
               </div>
               
               <div className="space-y-3">
-                {getUnifiedRoutineItems().map((item) => (
+                {/* Only show routineItems, NOT taskTabItems */}
+                {getDisplayRoutineItems().map((item) => (
                   <div 
                     key={item.id} 
                     className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
