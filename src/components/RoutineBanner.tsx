@@ -1,7 +1,9 @@
 
 import { Clock, ArrowRight } from "lucide-react";
 
-export function RoutineBanner() {
+export function RoutineBanner({ wakeUpTime }: { wakeUpTime?: string | null }) {
+  // Determine what message to show
+  const isLate = wakeUpTime ? +wakeUpTime.split(":")[0] > 7 : false; // Assume late after 7am
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-blue-100/50 mb-6 shadow-lg hover:shadow-xl transition-all duration-300">
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
@@ -13,17 +15,37 @@ export function RoutineBanner() {
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg font-bold text-gray-900">You woke up at 8:00 AM</span>
-            <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-              Late start
-            </div>
+            <span className="text-lg font-bold text-gray-900">
+              {wakeUpTime
+                ? `You woke up at ${wakeUpTime}`
+                : "Waiting for you to start your day..."}
+            </span>
+            {wakeUpTime && (
+              <div className={`px-2 py-1 ${isLate ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} text-xs font-medium rounded-full`}>
+                {isLate ? "Late start" : "On time"}
+              </div>
+            )}
           </div>
           <div className="text-gray-600 mb-2">
-            Skipping <span className="font-semibold text-gray-800">Naam Jaap</span> for now.
+            {wakeUpTime
+              ? isLate
+                ? "Skipping Naam Jaap for now."
+                : "Let's begin your day with Naam Jaap!"
+              : "Press the button to start the day and calibrate your routine."}
           </div>
           <div className="flex items-center gap-2 text-blue-600 font-semibold">
-            <span>Do it in the evening instead</span>
-            <ArrowRight className="h-4 w-4" />
+            {wakeUpTime ? (
+              isLate ? (
+                <>
+                  <span>Do it in the evening instead</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  <span>Keep up your streak!</span>
+                </>
+              )
+            ) : null}
           </div>
         </div>
         <div className="hidden sm:block">

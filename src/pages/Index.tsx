@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -7,9 +6,9 @@ import { RoutineBanner } from "@/components/RoutineBanner";
 import { RoutineCalendar } from "@/components/RoutineCalendar";
 import { UrgentTaskDialog } from "@/components/UrgentTaskDialog";
 import { Calendar, Zap } from "lucide-react";
-// Import hooks/modules for real data:
 import { useGoals } from "@/hooks/useGoals";
 import { ReminderNoteItem } from '@/types/reminders';
+import { useDayStart } from "@/hooks/useDayStart";
 
 const Index = () => {
   // --- Routine data (Minimal, to demo dynamic) ---
@@ -77,6 +76,9 @@ const Index = () => {
     },
   ]);
   // --- End reminders stub ---
+
+  // Day start (wake up logic)
+  const [dayStarted, wakeUpTime, startDay] = useDayStart();
 
   // Goals - dynamic live from hook
   const {
@@ -153,11 +155,35 @@ const Index = () => {
     console.log('Urgent task:', taskDescription, duration);
   };
 
+  // Fullscreen overlay if day not started yet AND after 2 AM
+  const [showOverlay, setShowOverlay] = useState(false);
+  useEffect(() => {
+    const now = new Date();
+    setShowOverlay(!dayStarted && now.getHours() >= 2);
+  }, [dayStarted]);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
         <main className="flex-1 flex flex-col items-stretch xl:px-8 px-4 pt-6 bg-transparent">
+          {/* Start-the-day overlay */}
+          {showOverlay && (
+            <div className="fixed inset-0 z-50 bg-white/90 flex flex-col items-center justify-center">
+              <div className="mb-8 text-3xl font-bold text-blue-700 animate-fade-in">Good Morning!</div>
+              <button
+                className="px-8 py-4 bg-purple-600 text-white rounded-2xl text-xl font-semibold shadow-lg hover:bg-purple-700 transition hover-scale"
+                onClick={() => {
+                  startDay();
+                  setShowOverlay(false);
+                }}
+              >
+                Let's Start the Day
+              </button>
+              <div className="mt-3 text-gray-400 text-sm">Press to calibrate your routine for today</div>
+            </div>
+          )}
+
           <div className="flex items-center gap-4 mb-6">
             <SidebarTrigger />
             <div className="h-8 w-px bg-gray-200"></div>
@@ -200,7 +226,7 @@ const Index = () => {
             </div>
           </header>
           
-          <RoutineBanner />
+          <RoutineBanner wakeUpTime={wakeUpTime} />
           {/* Pass ALL dynamic data */}
           <DashboardTiles 
             routine={routineSummary}
