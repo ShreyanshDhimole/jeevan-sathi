@@ -41,34 +41,50 @@ const DEMO_ROUTINE_ITEMS: RoutineItem[] = [
 ];
 // --- End routine data ---
 
+const REMINDER_STORAGE_KEY = "reminders_notes";
+
 const Index = () => {
   const [routineItems] = useState<RoutineItem[]>(DEMO_ROUTINE_ITEMS);
 
   // Replace separate local tasks state with useTasks hook
   const { tasks } = useTasks();
 
-  const [reminders, setReminders] = useState<ReminderNoteItem[]>([
-    {
-      id: 'r1',
-      type: 'reminder',
-      title: 'Dadi ki medicine',
-      content: '',
-      category: 'general-reminders',
-      date: new Date().toISOString(),
-      time: '18:00',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'r2',
-      type: 'reminder',
-      title: 'Aadhaar card',
-      content: '',
-      category: 'general-reminders',
-      date: new Date(Date.now() + 86400000).toISOString(),
-      time: '',
-      createdAt: new Date().toISOString(),
-    },
-  ]);
+  // Reminders: sync with the reminders_notes localStorage key
+  const [reminders, setReminders] = useState<ReminderNoteItem[]>([]);
+  useEffect(() => {
+    const stored = localStorage.getItem(REMINDER_STORAGE_KEY);
+    if (stored) {
+      try {
+        setReminders(JSON.parse(stored));
+      } catch {
+        setReminders([]);
+      }
+    } else {
+      setReminders([]);
+    }
+  }, []);
+
+  // Listen for localStorage changes from other tabs/windows and also whenever dashboard is re-rendered
+  useEffect(() => {
+    const handler = () => {
+      const stored = localStorage.getItem(REMINDER_STORAGE_KEY);
+      if (stored) {
+        try {
+          setReminders(JSON.parse(stored));
+        } catch {
+          setReminders([]);
+        }
+      } else {
+        setReminders([]);
+      }
+    };
+    window.addEventListener('storage', handler);
+    const interval = setInterval(handler, 2000); // fallback: check every 2s
+    return () => {
+      window.removeEventListener('storage', handler);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Day start (wake up logic)
   const [dayStarted, wakeUpTime, startDay] = useDayStart();
@@ -125,11 +141,14 @@ const Index = () => {
   };
 
   // 5. Reminders - mapped into Dashboard format
-  const remindersDashboard = reminders.slice(0,5).map((r) => ({
-    id: r.id,
-    label: r.title,
-    time: r.time || (r.date ? new Date(r.date as string).toLocaleDateString() : ""),
-  }));
+  const remindersDashboard = reminders
+    .filter((r) => r.type === "reminder") // Only reminders, not notes
+    .slice(0,5)
+    .map((r) => ({
+      id: r.id,
+      label: r.title,
+      time: r.time || (r.date ? new Date(r.date as string).toLocaleDateString() : ""),
+    }));
 
   // 6. Weekly - demo, calculate percent change from previous
   const weeklyStats = {
