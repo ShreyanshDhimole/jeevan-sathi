@@ -1,10 +1,67 @@
 
 import { Clock, Target, Gift, TrendingUp, Calendar, CheckCircle2, Star, Zap } from "lucide-react";
 
-export function DashboardTiles() {
+interface RoutineSummary {
+  completed: number;
+  total: number;
+  currentTask?: string;
+  nextTask?: string;
+  nextTime?: string;
+  progressRatio: string;
+}
+
+interface TaskSummary {
+  left: number;
+  items: { id: string; name: string }[];
+}
+
+interface GoalSummary {
+  name: string;
+  percent: number;
+  completedDays: number;
+  totalDays: number;
+  daysLeft: number;
+}
+
+interface RewardsSummary {
+  totalPoints: number;
+  streak: number;
+  nextRewardAt: number;
+  lastPoints: number;
+}
+
+interface ReminderItem {
+  id: string;
+  label: string;
+  time: string;
+}
+
+interface WeeklyProgress {
+  percent: number;
+  bars: number[];
+  improving: boolean;
+}
+
+interface DashboardTilesProps {
+  routine: RoutineSummary;
+  tasks: TaskSummary;
+  goal: GoalSummary;
+  rewards: RewardsSummary;
+  reminders: ReminderItem[];
+  weekly: WeeklyProgress;
+}
+
+export function DashboardTiles({
+  routine,
+  tasks,
+  goal,
+  rewards,
+  reminders,
+  weekly,
+}: DashboardTilesProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-      {/* Today's Routine - Enhanced */}
+      {/* Today's Routine */}
       <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
         <div className="relative z-10">
@@ -13,24 +70,30 @@ export function DashboardTiles() {
               <Clock className="h-6 w-6" />
             </div>
             <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
-              5/8 Done
+              {routine.completed}/{routine.total} Done
             </div>
           </div>
           <h3 className="text-xl font-bold mb-2">Today's Routine</h3>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
-              <span className="text-sm opacity-90">Current: Work Session</span>
+              <span className="text-sm opacity-90">
+                Current: {routine.currentTask ?? "-"}
+              </span>
             </div>
-            <div className="text-xs opacity-75">Next: Lunch Break (12:30 PM)</div>
+            <div className="text-xs opacity-75">
+              Next: {routine.nextTask ? `${routine.nextTask} (${routine.nextTime})` : "—"}
+            </div>
           </div>
           <div className="mt-4 bg-white/20 rounded-full h-2">
-            <div className="bg-white h-2 rounded-full w-5/8 transition-all duration-500"></div>
+            <div
+              className="bg-white h-2 rounded-full transition-all duration-500"
+              style={{ width: routine.progressRatio }}
+            ></div>
           </div>
         </div>
       </div>
-
-      {/* Quick Tasks - Enhanced */}
+      {/* Quick Tasks */}
       <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
         <div className="relative z-10">
@@ -39,24 +102,25 @@ export function DashboardTiles() {
               <CheckCircle2 className="h-6 w-6" />
             </div>
             <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
-              3 Left
+              {tasks.left} Left
             </div>
           </div>
           <h3 className="text-xl font-bold mb-4">Quick Tasks</h3>
           <div className="space-y-2">
-            <div className="flex items-center gap-3 p-2 bg-white/10 rounded-xl">
-              <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full"></div>
-              <span className="text-sm flex-1">Call dentist</span>
-            </div>
-            <div className="flex items-center gap-3 p-2 bg-white/10 rounded-xl">
-              <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full"></div>
-              <span className="text-sm flex-1">Buy groceries</span>
-            </div>
+            {tasks.items.length ? (
+              tasks.items.slice(0, 2).map((item) => (
+                <div key={item.id} className="flex items-center gap-3 p-2 bg-white/10 rounded-xl">
+                  <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full"></div>
+                  <span className="text-sm flex-1">{item.name}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-white/70 italic px-2">No quick tasks</div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Goal Progress - Enhanced */}
+      {/* Goal Progress */}
       <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-500 via-violet-600 to-purple-700 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
         <div className="relative z-10">
@@ -65,19 +129,23 @@ export function DashboardTiles() {
               <Target className="h-6 w-6" />
             </div>
             <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
-              75%
+              {goal.percent}%
             </div>
           </div>
-          <h3 className="text-xl font-bold mb-2">Learn Python</h3>
-          <div className="text-sm opacity-90 mb-4">22 of 30 days completed</div>
-          <div className="bg-white/20 rounded-full h-3 mb-2">
-            <div className="bg-gradient-to-r from-yellow-300 to-orange-300 h-3 rounded-full w-3/4 transition-all duration-500 shadow-sm"></div>
+          <h3 className="text-xl font-bold mb-2">{goal.name || "Goal"}</h3>
+          <div className="text-sm opacity-90 mb-4">
+            {goal.completedDays} of {goal.totalDays} days completed
           </div>
-          <div className="text-xs opacity-75">8 days remaining</div>
+          <div className="bg-white/20 rounded-full h-3 mb-2">
+            <div
+              className="bg-gradient-to-r from-yellow-300 to-orange-300 h-3 rounded-full transition-all duration-500 shadow-sm"
+              style={{ width: `${goal.percent}%` }}
+            ></div>
+          </div>
+          <div className="text-xs opacity-75">{goal.daysLeft} days remaining</div>
         </div>
       </div>
-
-      {/* Points & Rewards - Enhanced */}
+      {/* Points & Rewards */}
       <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-amber-600 to-yellow-600 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
         <div className="relative z-10">
@@ -87,21 +155,28 @@ export function DashboardTiles() {
             </div>
             <div className="flex items-center gap-1 text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
               <Zap className="h-3 w-3" />
-              +15
+              +{rewards.lastPoints}
             </div>
           </div>
-          <h3 className="text-xl font-bold mb-2">1,250 Points</h3>
-          <div className="text-sm opacity-90 mb-4">Streak: 7 days 🔥</div>
+          <h3 className="text-xl font-bold mb-2">{rewards.totalPoints} Points</h3>
+          <div className="text-sm opacity-90 mb-4">Streak: {rewards.streak} days 🔥</div>
           <div className="space-y-2">
-            <div className="text-xs opacity-75">Next reward at 1,500 pts</div>
+            <div className="text-xs opacity-75">
+              Next reward at {rewards.nextRewardAt} pts
+            </div>
             <div className="bg-white/20 rounded-full h-2">
-              <div className="bg-white h-2 rounded-full w-4/5 transition-all duration-500"></div>
+              <div
+                className="bg-white h-2 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(
+                  (rewards.totalPoints / rewards.nextRewardAt) * 100,
+                  100
+                )}%` }}
+              ></div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Smart Reminders - Enhanced */}
+      {/* Smart Reminders */}
       <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-pink-500 via-rose-600 to-red-600 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
         <div className="relative z-10">
@@ -110,24 +185,25 @@ export function DashboardTiles() {
               <Calendar className="h-6 w-6" />
             </div>
             <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
-              2 Active
+              {reminders.length} Active
             </div>
           </div>
           <h3 className="text-xl font-bold mb-4">Smart Reminders</h3>
           <div className="space-y-2">
-            <div className="p-2 bg-white/10 rounded-xl">
-              <div className="text-sm font-medium">Dadi ki medicine</div>
-              <div className="text-xs opacity-75">Today 6:00 PM</div>
-            </div>
-            <div className="p-2 bg-white/10 rounded-xl">
-              <div className="text-sm font-medium">Aadhaar card</div>
-              <div className="text-xs opacity-75">Tomorrow</div>
-            </div>
+            {reminders.length ? (
+              reminders.slice(0, 2).map((r) => (
+                <div key={r.id} className="p-2 bg-white/10 rounded-xl">
+                  <div className="text-sm font-medium">{r.label}</div>
+                  <div className="text-xs opacity-75">{r.time}</div>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-white/70 italic px-2">No reminders</div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Weekly Progress - Enhanced */}
+      {/* Weekly Progress */}
       <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
         <div className="relative z-10">
@@ -136,13 +212,15 @@ export function DashboardTiles() {
               <TrendingUp className="h-6 w-6" />
             </div>
             <div className="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
-              +12%
+              {weekly.percent > 0 ? `+${weekly.percent}%` : "0%"}
             </div>
           </div>
           <h3 className="text-xl font-bold mb-2">Weekly Progress</h3>
-          <div className="text-sm opacity-90 mb-4">You're improving! 🚀</div>
+          <div className="text-sm opacity-90 mb-4">
+            {weekly.improving ? "You're improving! 🚀" : "Stay consistent!"}
+          </div>
           <div className="flex items-end gap-1 h-12">
-            {[40, 60, 45, 80, 65, 90, 75].map((height, i) => (
+            {weekly.bars.map((height, i) => (
               <div
                 key={i}
                 className="bg-white/30 rounded-t flex-1 transition-all duration-500 hover:bg-white/50"
@@ -155,3 +233,4 @@ export function DashboardTiles() {
     </div>
   );
 }
+

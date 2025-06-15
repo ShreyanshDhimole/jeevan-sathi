@@ -7,19 +7,22 @@ import { RoutineBanner } from "@/components/RoutineBanner";
 import { RoutineCalendar } from "@/components/RoutineCalendar";
 import { UrgentTaskDialog } from "@/components/UrgentTaskDialog";
 import { Calendar, Zap } from "lucide-react";
+// Import hooks/modules for real data:
+import { useGoals } from "@/hooks/useGoals";
+// Task data here is local state for demo; in real app, probably context/hook:
+import React, { useEffect } from "react";
+import { ReminderNoteItem } from '@/types/reminders';
 
 const Index = () => {
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
-
-  // Mock routine items for calendar - in real app this would come from context or props
-  const mockRoutineItems = [
-    { 
-      id: '1', 
-      time: "6:00 AM", 
-      task: "Naam Jaap", 
-      status: "completed" as const, 
-      priority: "high" as const, 
+  // --- Routine data (Minimal, to demo dynamic) ---
+  // In real app pull from context/hook/store for routine data:
+  const [routineItems] = useState([
+    {
+      id: '1',
+      time: "6:00 AM",
+      task: "Naam Jaap",
+      status: "completed" as const,
+      priority: "high" as const,
       flexible: true,
       points: 75,
       streak: 12,
@@ -30,19 +33,125 @@ const Index = () => {
           quality: 5,
           duration: 30,
           notes: "Great focus today, felt very peaceful",
-          pointsEarned: 75
-        }
+          pointsEarned: 75,
+        },
       ],
       lastCompleted: new Date().toISOString(),
       duration: 30,
       compressible: true,
-      minDuration: 15
-    }
-  ];
+      minDuration: 15,
+    },
+  ]);
+  // --- End routine data ---
+
+  // Task state (simulate persistent, replace with central store if exists)
+  const [tasks, setTasks] = useState([
+    { id: '1', task: "Complete project proposal", priority: "high", completed: false, starred: false },
+    { id: '2', task: "Call insurance company", priority: "medium", completed: true, starred: false },
+    { id: '3', task: "Buy groceries", priority: "low", completed: false, starred: true },
+    { id: '4', task: "Schedule dentist appointment", priority: "medium", completed: false, starred: false },
+    { id: '5', task: "Review team feedback", priority: "high", completed: true, starred: true },
+  ]);
+  // For real app, this could come from context, or a query/hook.
+  // --- End tasks state ---
+
+  // Reminders stub, replace with data fetching from reminders/notes context/hook
+  const [reminders, setReminders] = useState<ReminderNoteItem[]>([
+    {
+      id: 'r1',
+      type: 'reminder',
+      title: 'Dadi ki medicine',
+      content: '',
+      category: 'general-reminders',
+      date: new Date().toISOString(),
+      time: '18:00',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'r2',
+      type: 'reminder',
+      title: 'Aadhaar card',
+      content: '',
+      category: 'general-reminders',
+      date: new Date(Date.now() + 86400000).toISOString(),
+      time: '',
+      createdAt: new Date().toISOString(),
+    },
+  ]);
+  // --- End reminders stub ---
+
+  // Goals - dynamic live from hook
+  const {
+    goals,
+  } = useGoals();
+
+  // Derived dashboard data from modules:
+  // 1. Routine summary calculation (stubbed - replace with dynamic)
+  // Find total + completed. Show current/next.
+  const routineTotal = routineItems.length;
+  const routineCompleted = routineItems.filter((r) => r.status === 'completed').length;
+  const current = routineItems.find((r) => r.status === 'current');
+  const next = routineItems.find((r) => r.status === 'upcoming');
+  const routineSummary = {
+    completed: routineCompleted,
+    total: routineTotal,
+    currentTask: current?.task ?? "",
+    nextTask: next?.task ?? "",
+    nextTime: next?.time ?? "",
+    progressRatio: `${routineCompleted === 0 ? 0 : Math.min((routineCompleted / routineTotal) * 100,100)}%`,
+  };
+
+  // 2. Tasks summary
+  const quickTasks = tasks.filter((t) => !t.completed).map((t) => ({ id: t.id, name: t.task }));
+  const taskSummary = {
+    left: quickTasks.length,
+    items: quickTasks,
+  };
+
+  // 3. Goal summary (first goal, fallback blank)
+  const firstGoal = goals[0];
+  const completedDays = firstGoal?.subGoals.filter((sg) => sg.isCompleted).length ?? 0;
+  const totalDays = firstGoal?.subGoals.length ?? 0;
+  const percentDone = totalDays === 0 ? 0 : Math.floor((completedDays / totalDays) * 100);
+  const goalSummary = {
+    name: firstGoal?.title ?? "",
+    percent: percentDone,
+    completedDays,
+    totalDays,
+    daysLeft: totalDays - completedDays,
+  };
+
+  // 4. Rewards - demo via points calculated from tasks/goals etc
+  const totalPoints =
+    goals.reduce((acc, g) => acc + g.subGoals.filter(sg => sg.isCompleted).length * 10, 0) +
+    tasks.filter(t => t.completed).length * 5;
+  const rewardsSummary = {
+    totalPoints,
+    streak: 7, // Fake, add actual streak logic later
+    nextRewardAt: 1500,
+    lastPoints: 15,
+  };
+
+  // 5. Reminders - mapped into Dashboard format
+  const remindersDashboard = reminders.slice(0,5).map((r) => ({
+    id: r.id,
+    label: r.title,
+    time: r.time || r.date ? new Date(r.date as string).toLocaleDateString() : "",
+  }));
+
+  // 6. Weekly - demo, calculate percent change from previous
+  const weeklyStats = {
+    percent: 12,
+    bars: [40, 60, 45, 80, 65, 90, 75],
+    improving: true,
+  };
+
+  // Dialog states
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isUrgentTaskOpen, setIsUrgentTaskOpen] = useState(false);
 
   const handleUrgentTask = (taskDescription: string, duration: number) => {
     console.log('Urgent task:', taskDescription, duration);
-    // This would integrate with your routine management logic
   };
 
   return (
@@ -57,8 +166,7 @@ const Index = () => {
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-sm text-gray-600">Live updates active</span>
             </div>
-            
-            {/* Add calendar and urgent task buttons */}
+            {/* Calendar & Urgent Task Buttons */}
             <div className="ml-auto flex items-center gap-3">
               <button 
                 onClick={() => setIsCalendarOpen(true)}
@@ -76,7 +184,6 @@ const Index = () => {
               </button>
             </div>
           </div>
-          
           <header className="mb-8">
             <div className="flex items-center gap-3 mb-3">
               <h1 className="text-3xl xl:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent">
@@ -95,21 +202,26 @@ const Index = () => {
           </header>
           
           <RoutineBanner />
-          <DashboardTiles />
+          {/* Pass ALL dynamic data */}
+          <DashboardTiles 
+            routine={routineSummary}
+            tasks={taskSummary}
+            goal={goalSummary}
+            rewards={rewardsSummary}
+            reminders={remindersDashboard}
+            weekly={weeklyStats}
+          />
           
           <div className="mt-8 text-center text-sm text-gray-400">
             Last updated: {new Date().toLocaleTimeString()}
           </div>
         </main>
       </div>
-
-      {/* Calendar and Urgent Task Dialogs */}
       <RoutineCalendar
         isOpen={isCalendarOpen}
         onClose={() => setIsCalendarOpen(false)}
-        routineItems={mockRoutineItems}
+        routineItems={routineItems}
       />
-
       <UrgentTaskDialog
         isOpen={isUrgentTaskOpen}
         onClose={() => setIsUrgentTaskOpen(false)}
@@ -120,3 +232,4 @@ const Index = () => {
 };
 
 export default Index;
+
