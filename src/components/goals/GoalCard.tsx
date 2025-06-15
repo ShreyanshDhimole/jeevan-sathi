@@ -1,16 +1,33 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
+// Removed Slider import
+// import { Slider } from "@/components/ui/slider";
+import { Progress } from "@/components/ui/progress";
 import { Trash, Edit, Clock, Play, Square, Plus } from "lucide-react";
 import type { SubGoal } from "@/hooks/useGoals";
+
+// Recursive progress calculation for sub-goals
+function countSubGoals(subGoals: SubGoal[]): { total: number; completed: number } {
+  return subGoals.reduce(
+    (acc, sg) => {
+      const inner = countSubGoals(sg.subGoals ?? []);
+      return {
+        total: acc.total + 1 + inner.total,
+        completed: acc.completed + (sg.isCompleted ? 1 : 0) + inner.completed,
+      };
+    },
+    { total: 0, completed: 0 }
+  );
+}
 
 // Props same as before except recursive subgoals now supported!
 export interface GoalCardProps {
   goal: {
     id: string;
     title: string;
-    progress: number;
+    progress: number; // ignored now, calculated automatically
     subGoals: SubGoal[];
     timerState: {
       isRunning: boolean;
@@ -147,6 +164,11 @@ const GoalCard: React.FC<GoalCardProps> = ({
 }) => {
   const [subInput, setSubInput] = useState("");
 
+  // --- Progress calculation ---
+  const { total, completed } = countSubGoals(goal.subGoals);
+  // Avoid divide by zero; if no sub-goals, treat as 0% complete.
+  const computedProgress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
       <div className="flex items-center justify-between mb-4">
@@ -225,16 +247,13 @@ const GoalCard: React.FC<GoalCardProps> = ({
           Overall Progress
         </label>
         <div className="flex items-center gap-2 mt-1">
-          <Slider
-            defaultValue={[goal.progress]}
-            max={100}
-            step={1}
-            onValueChange={(value) =>
-              updateGoal(goal.id, { progress: value[0] })
-            }
-            className="flex-1"
-          />
-          <span className="text-sm text-gray-500">{goal.progress}%</span>
+          {/* PROGRESS BAR (readonly) */}
+          <div className="flex-1">
+            <Progress value={computedProgress} />
+          </div>
+          <span className="text-sm text-gray-500">
+            {computedProgress}%
+          </span>
         </div>
       </div>
 
@@ -286,3 +305,5 @@ const GoalCard: React.FC<GoalCardProps> = ({
 };
 
 export default GoalCard;
+
+// File is long! Consider splitting it after this change, e.g. make SubGoalNode its own file or split helpers.
