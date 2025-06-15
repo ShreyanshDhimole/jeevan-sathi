@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { RoutineItem, CompletionRecord, StreakReward } from "@/types/routine";
 import { recalibrateWithUrgentTask } from "@/utils/recalibrationLogic";
 import { useTasks } from "@/hooks/useTasks";
+import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
 
 const ROUTINE_STORAGE_KEY = "user_routine";
 
@@ -12,7 +13,8 @@ export function useRoutine() {
 
   // --- Routine item state ---
   const [routineItems, setRoutineItems] = useState<RoutineItem[]>([]);
-  const [totalPoints, setTotalPoints] = useState(1450);
+  // POINTS: Use shared points state
+  const [totalPoints, setTotalPoints] = useState<number>(0);
 
   // --- Dialogs and UI state ---
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
@@ -35,6 +37,13 @@ export function useRoutine() {
     } else {
       setRoutineItems(getDefaultRoutineItems());
     }
+    // Load shared points
+    setTotalPoints(getPoints());
+    // Subscribe points with cross-tab sync
+    const unsubscribePoints = subscribeToPointsChange(setTotalPoints);
+    return () => {
+      unsubscribePoints();
+    };
   }, []);
 
   // Listen for 'storage' events and also poll every 2 seconds, to sync across tabs and dashboard.
@@ -49,6 +58,7 @@ export function useRoutine() {
             parsed.some((item, idx) => item.id !== routineItems[idx]?.id)
           ) {
             setRoutineItems(parsed);
+            console.log("[syncRoutineFromStorage] Loaded from localStorage:", parsed);
           }
         }
       } catch (e) {}
@@ -67,10 +77,11 @@ export function useRoutine() {
     // eslint-disable-next-line
   }, [routineItems]);
 
-  // Keep routineItems in sync with localStorage
+  // Keep routineItems in sync with localStorage & log
   useEffect(() => {
     if (routineItems.length > 0) {
       localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(routineItems));
+      console.log("[setRoutineItems] Saved to localStorage:", routineItems);
     }
   }, [routineItems]);
 
@@ -217,10 +228,11 @@ export function useRoutine() {
       const reward = getStreakReward(newStreak);
       setStreakReward(reward);
       setIsStreakRewardOpen(true);
-      setTotalPoints(prev => prev + task.points + reward.bonusPoints);
+      // AWARD POINTS: Use shared logic!
+      setPoints(totalPoints + task.points + reward.bonusPoints);
       setShowCelebration(true);
     } else {
-      setTotalPoints(prev => prev + task.points);
+      setPoints(totalPoints + task.points);
     }
     setRoutineItems(prev =>
       prev.map(item =>
@@ -381,7 +393,7 @@ export function useRoutine() {
     setStreakReward(null);
   };
 
-  // --- API ---
+  // --- API (update: remove setTotalPoints from public API, as now handled via pointsStorage) ---
   return {
     routineItems,
     setRoutineItems,
@@ -404,8 +416,8 @@ export function useRoutine() {
     handleTaskStart,
     handleTaskComplete,
     updateTask,
-    totalPoints,
-    setTotalPoints,
+    totalPoints, // now SAFE to expose as the synchronized value (was 1450), now the real one!
+    // REMOVE setTotalPoints from API, not used directly anymore.
     getMissedTasksCount,
     closeTaskTracker,
     closeStreakReward,
