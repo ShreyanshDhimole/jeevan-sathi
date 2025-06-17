@@ -30,12 +30,15 @@ export function useRoutine() {
     const stored = localStorage.getItem(ROUTINE_STORAGE_KEY);
     if (stored) {
       try {
-        setRoutineItems(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        // Only set if we actually have data, don't fall back to defaults
+        if (parsed && parsed.length > 0) {
+          setRoutineItems(parsed);
+        }
       } catch {
-        setRoutineItems(getDefaultRoutineItems());
+        // Don't set defaults on parse error, just start fresh
+        setRoutineItems([]);
       }
-    } else {
-      setRoutineItems(getDefaultRoutineItems());
     }
     // Load shared points
     setTotalPoints(getPoints());
@@ -305,83 +308,6 @@ export function useRoutine() {
     }
   };
 
-  // For demo, show a default routine if no data in storage
-  function getDefaultRoutineItems(): RoutineItem[] {
-    return [
-      {
-        id: '1',
-        time: "6:00 AM",
-        task: "Naam Jaap",
-        status: "completed",
-        priority: "high",
-        flexible: true,
-        points: 75,
-        streak: 12,
-        quality: 5,
-        completionHistory: [],
-        lastCompleted: new Date().toISOString(),
-        duration: 30,
-        compressible: true,
-        minDuration: 15
-      },
-      {
-        id: '2',
-        time: "7:00 AM",
-        task: "Morning Exercise",
-        status: "completed",
-        priority: "medium",
-        flexible: true,
-        points: 50,
-        streak: 8,
-        completionHistory: [],
-        duration: 45,
-        compressible: true,
-        minDuration: 20
-      },
-      {
-        id: '3',
-        time: "8:00 AM",
-        task: "Breakfast",
-        status: "current",
-        priority: "high",
-        flexible: false,
-        points: 25,
-        streak: 15,
-        completionHistory: [],
-        duration: 30,
-        compressible: false
-      },
-      {
-        id: '4',
-        time: "9:00 AM",
-        task: "Work Focus Time",
-        status: "upcoming",
-        priority: "high",
-        flexible: true,
-        points: 100,
-        streak: 5,
-        completionHistory: [],
-        duration: 90,
-        compressible: true,
-        minDuration: 60,
-        dependsOn: '3'
-      },
-      {
-        id: '5',
-        time: "11:00 AM",
-        task: "Client Meeting",
-        status: "upcoming",
-        priority: "high",
-        flexible: false,
-        points: 150,
-        streak: 0,
-        completionHistory: [],
-        duration: 60,
-        compressible: false
-      },
-    ];
-  }
-
   // --- Misc handlers for UI/UX ---
   const closeTaskTracker = () => {
     setIsTaskTrackerOpen(false);
@@ -393,7 +319,7 @@ export function useRoutine() {
     setStreakReward(null);
   };
 
-  // --- API (update: remove setTotalPoints from public API, as now handled via pointsStorage) ---
+  // --- API ---
   return {
     routineItems,
     setRoutineItems,
@@ -416,8 +342,7 @@ export function useRoutine() {
     handleTaskStart,
     handleTaskComplete,
     updateTask,
-    totalPoints, // now SAFE to expose as the synchronized value (was 1450), now the real one!
-    // REMOVE setTotalPoints from API, not used directly anymore.
+    totalPoints,
     getMissedTasksCount,
     closeTaskTracker,
     closeStreakReward,
