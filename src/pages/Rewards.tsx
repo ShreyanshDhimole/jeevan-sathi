@@ -1,236 +1,86 @@
-import React, { useState, useEffect } from "react";
+
+import React from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Gift, Star, Crown, Trophy, Plus, Trash } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
+import { Gift, Trophy, Star } from "lucide-react";
 
 const Rewards = () => {
-  const [points, setPointsState] = React.useState(0); // shared points
-
-  // Sync from localStorage
-  React.useEffect(() => {
-    setPointsState(getPoints());
-    const unsubscribe = subscribeToPointsChange(setPointsState);
-    return () => unsubscribe();
-  }, []);
-
-  const updatePoints = (v: number) => {
-    setPointsState(v);
-    setPoints(v);
-  };
-
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [newReward, setNewReward] = useState({ reward: "", cost: 100, icon: "🎁" });
-  const { toast } = useToast();
-
-  const [rewards, setRewards] = useState([
-    { id: 1, reward: "20 mins Social Media", cost: 100, available: true, icon: "📱" },
-    { id: 2, reward: "Order Favorite Snack", cost: 300, available: true, icon: "🍕" },
-    { id: 3, reward: "Movie Night", cost: 500, available: true, icon: "🎬" },
-    { id: 4, reward: "Shopping Spree", cost: 1000, available: true, icon: "🛍️" },
-    { id: 5, reward: "Weekend Trip", cost: 2000, available: false, icon: "✈️" },
-    { id: 6, reward: "Spa Day", cost: 1500, available: false, icon: "🧖‍♀️" },
-  ]);
-
-  const claimReward = (reward: typeof rewards[0]) => {
-    if (points >= reward.cost) {
-      updatePoints(points - reward.cost);
-      toast({
-        title: "Reward Claimed! 🎉",
-        description: `Enjoy your ${reward.reward}! You spent ${reward.cost} points.`,
-      });
-    } else {
-      toast({
-        title: "Not enough points 😅",
-        description: `You need ${reward.cost - points} more points to claim this reward.`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const createCustomReward = () => {
-    if (newReward.reward.trim()) {
-      const customReward = {
-        id: rewards.length + 1,
-        reward: newReward.reward,
-        cost: newReward.cost,
-        available: true,
-        icon: newReward.icon
-      };
-      setRewards(prev => [...prev, customReward]);
-      setNewReward({ reward: "", cost: 100, icon: "🎁" });
-      setShowCreateDialog(false);
-      toast({
-        title: "Custom Reward Created! ✨",
-        description: `"${customReward.reward}" added to your rewards list.`,
-      });
-    }
-  };
-
-  // Handle reward deletion
-  const deleteReward = (id: number) => {
-    setRewards(rewards => rewards.filter(r => r.id !== id));
-    toast({
-      title: "Reward Deleted 🗑️",
-      description: `The reward has been removed from your list.`,
-      variant: "destructive",
-    });
-  };
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
-        <main className="flex-1 flex flex-col items-stretch xl:px-8 px-4 pt-6 bg-transparent">
-          <div className="flex items-center gap-4 mb-6">
+        <main className="flex-1 flex flex-col px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
+          {/* Mobile-optimized header */}
+          <div className="flex items-center gap-4 mb-4 md:mb-6">
             <SidebarTrigger />
-            <div className="h-8 w-px bg-gray-200"></div>
+            <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
             <div className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-yellow-600" />
+              <Gift className="h-5 w-5 text-green-600" />
               <span className="text-lg font-semibold text-gray-800">Rewards</span>
             </div>
-            <div className="ml-auto">
-              <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Create Custom Reward
-              </Button>
-            </div>
-          </div>
-          
-          <div className="space-y-6">
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-6 text-white">
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-3 rounded-full">
-                  <Crown className="h-12 w-12" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-bold">{points} Points</h2>
-                  <p className="text-yellow-100">Your current balance</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-yellow-600" />
-                Available Rewards
-              </h3>
-              <div className="grid gap-4">
-                {rewards.map((item) => (
-                  <div key={item.id} className={`flex items-center justify-between p-4 rounded-lg border transition-all hover:shadow-md ${
-                    points >= item.cost ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
-                  }`}>
-                    <div className="flex items-center gap-4">
-                      <div className="text-2xl">{item.icon}</div>
-                      <div>
-                        <span className={`font-medium ${points >= item.cost ? 'text-gray-900' : 'text-gray-500'}`}>
-                          {item.reward}
-                        </span>
-                        <div className="text-sm text-gray-500">
-                          {points >= item.cost ? 'Ready to claim!' : `Need ${item.cost - points} more points`}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-gray-600">{item.cost} pts</span>
-                      <button 
-                        onClick={() => claimReward(item)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          points >= item.cost
-                            ? 'bg-green-500 text-white hover:bg-green-600' 
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
-                        disabled={points < item.cost}
-                      >
-                        {points >= item.cost ? 'Claim' : 'Locked'}
-                      </button>
-                      <button
-                        title="Delete Reward"
-                        onClick={() => deleteReward(item.id)}
-                        className="ml-2 p-2 hover:bg-red-100 rounded transition-colors"
-                      >
-                        <Trash className="h-5 w-5 text-red-500" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-              <h4 className="font-bold text-blue-900 mb-2">💡 Earning Tips</h4>
-              <ul className="text-blue-800 text-sm space-y-1">
-                <li>• Complete high-priority tasks for more points</li>
-                <li>• Maintain streaks for bonus rewards</li>
-                <li>• 7-day streak = +50 points, 30-day streak = +200 points</li>
-                <li>• Quality ratings of 4-5 stars give small bonuses</li>
-              </ul>
-            </div>
           </div>
 
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Gift className="h-5 w-5 text-yellow-600" />
-                  Create Custom Reward
-                </DialogTitle>
-              </DialogHeader>
+          {/* Mobile-friendly content */}
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border border-gray-100">
+              <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Available Rewards</h2>
               
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Reward Name
-                  </label>
-                  <input
-                    type="text"
-                    value={newReward.reward}
-                    onChange={(e) => setNewReward(prev => ({ ...prev, reward: e.target.value }))}
-                    placeholder="e.g., Extra gaming time, favorite meal..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+              {/* Reward cards - stack on mobile, grid on desktop */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg border border-green-200 bg-green-50">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Trophy className="h-6 w-6 text-green-600" />
+                    <span className="font-semibold text-green-800">Week Streak</span>
+                  </div>
+                  <p className="text-sm text-green-700 mb-3">Complete 7 days in a row</p>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-green-600">+100 pts</span>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Points Cost
-                  </label>
-                  <input
-                    type="number"
-                    value={newReward.cost}
-                    onChange={(e) => setNewReward(prev => ({ ...prev, cost: Number(e.target.value) }))}
-                    min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                <div className="p-4 rounded-lg border border-yellow-200 bg-yellow-50">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Star className="h-6 w-6 text-yellow-600" />
+                    <span className="font-semibold text-yellow-800">Perfect Day</span>
+                  </div>
+                  <p className="text-sm text-yellow-700 mb-3">Complete all tasks in a day</p>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-yellow-600">+50 pts</span>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Icon (emoji)
-                  </label>
-                  <input
-                    type="text"
-                    value={newReward.icon}
-                    onChange={(e) => setNewReward(prev => ({ ...prev, icon: e.target.value }))}
-                    placeholder="🎁"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)} className="flex-1">
-                    Cancel
-                  </Button>
-                  <Button onClick={createCustomReward} className="flex-1">
-                    Create Reward
-                  </Button>
+                <div className="p-4 rounded-lg border border-blue-200 bg-blue-50 md:col-span-2 lg:col-span-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Gift className="h-6 w-6 text-blue-600" />
+                    <span className="font-semibold text-blue-800">Month Champion</span>
+                  </div>
+                  <p className="text-sm text-blue-700 mb-3">30-day streak achievement</p>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-blue-600">+500 pts</span>
+                  </div>
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
+            </div>
+
+            {/* Progress section */}
+            <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Progress</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Current Streak</span>
+                  <span className="text-sm text-gray-600">3 days</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Total Points</span>
+                  <span className="text-sm text-gray-600">1,250 pts</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Next Reward</span>
+                  <span className="text-sm text-blue-600">Week Streak (4 days to go)</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </main>
       </div>
     </SidebarProvider>

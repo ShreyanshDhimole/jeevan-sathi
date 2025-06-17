@@ -21,6 +21,31 @@ export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemPro
     }
   }, []);
 
+  // Request notification permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  const showNotification = (title: string, body: string) => {
+    // Show toast notification
+    toast({
+      title,
+      description: body,
+      duration: 8000,
+    });
+
+    // Show native notification if permission granted
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        tag: 'routine-reminder',
+      });
+    }
+  };
+
   useEffect(() => {
     if (!settings.reminders.enableReminders) return;
 
@@ -37,32 +62,29 @@ export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemPro
 
           // Send reminder before task
           if (currentTime >= taskTime - settings.reminders.preTaskMinutes && currentTime < taskTime) {
-            toast({
-              title: "Upcoming Task! ⏰",
-              description: `"${task.task}" starts in ${settings.reminders.preTaskMinutes} minutes. Get ready!`,
-              duration: 8000,
-            });
+            showNotification(
+              "Upcoming Task! ⏰",
+              `"${task.task}" starts in ${settings.reminders.preTaskMinutes} minutes. Get ready!`
+            );
             onUpdateTask(task.id, { reminderSent: true });
           }
 
           // Send start reminder
           if (currentTime >= taskTime && currentTime < taskTime + 5) {
-            toast({
-              title: "Time to Start! 🚀",
-              description: `It's time for "${task.task}". Let's go!`,
-              duration: 10000,
-            });
+            showNotification(
+              "Time to Start! 🚀",
+              `It's time for "${task.task}". Let's go!`
+            );
           }
 
           // Send overdue reminder only once per task
           if (currentTime > taskTime + settings.reminders.overdueMinutes && 
               task.status === 'upcoming' && 
               !overdueNotificationsSent.has(task.id)) {
-            toast({
-              title: "Task Available ⏱️",
-              description: `"${task.task}" can still be completed when you're ready.`,
-              duration: 8000,
-            });
+            showNotification(
+              "Task Available ⏱️",
+              `"${task.task}" can still be completed when you're ready.`
+            );
             setOverdueNotificationsSent(prev => new Set(prev).add(task.id));
           }
         }
@@ -73,11 +95,10 @@ export const ReminderSystem = ({ routineItems, onUpdateTask }: ReminderSystemPro
           const elapsed = (now.getTime() - startTime.getTime()) / (1000 * 60); // minutes
           
           if (Math.floor(elapsed) === settings.reminders.motivationalNudgeMinutes) {
-            toast({
-              title: "Keep Going! 🔥",
-              description: `You've been at "${task.task}" for ${settings.reminders.motivationalNudgeMinutes} minutes. Stay focused!`,
-              duration: 6000,
-            });
+            showNotification(
+              "Keep Going! 🔥",
+              `You've been at "${task.task}" for ${settings.reminders.motivationalNudgeMinutes} minutes. Stay focused!`
+            );
           }
         }
       });

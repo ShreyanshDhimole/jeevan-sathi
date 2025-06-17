@@ -156,16 +156,19 @@ const Settings = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
-        <main className="flex-1 flex flex-col items-stretch xl:px-8 px-4 pt-6 bg-transparent">
-          <div className="flex items-center gap-4 mb-6">
-            <SidebarTrigger />
-            <div className="h-8 w-px bg-gray-200"></div>
-            <div className="flex items-center gap-2">
-              <SettingsIcon className="h-5 w-5 text-gray-600" />
-              <span className="text-lg font-semibold text-gray-800">Settings</span>
+        <main className="flex-1 flex flex-col px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
+          {/* Mobile-optimized header */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
+              <div className="flex items-center gap-2">
+                <SettingsIcon className="h-5 w-5 text-gray-600" />
+                <span className="text-lg font-semibold text-gray-800">Settings</span>
+              </div>
             </div>
-            <div className="ml-auto">
-              <Button onClick={saveSettings} className="flex items-center gap-2">
+            <div className="sm:ml-auto">
+              <Button onClick={saveSettings} className="flex items-center gap-2 w-full sm:w-auto">
                 <Save className="h-4 w-4" />
                 Save Settings
               </Button>
@@ -173,16 +176,17 @@ const Settings = () => {
           </div>
 
           <div className="bg-white rounded-xl shadow-lg border border-gray-100">
-            <Tabs value={visibleTab} onValueChange={(tab) => setVisibleTab(tab)} className="p-6">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="reminders">Reminders</TabsTrigger>
-                <TabsTrigger value="rewards">Rewards</TabsTrigger>
-                <TabsTrigger value="punishments">Punishments</TabsTrigger>
-                <TabsTrigger value="points">Points</TabsTrigger>
-                <TabsTrigger value="penalties">App Penalties</TabsTrigger>
+            <Tabs value={visibleTab} onValueChange={(tab) => setVisibleTab(tab)} className="p-3 md:p-6">
+              {/* Mobile-optimized tab list */}
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1 h-auto">
+                <TabsTrigger value="reminders" className="text-xs md:text-sm">Reminders</TabsTrigger>
+                <TabsTrigger value="rewards" className="text-xs md:text-sm">Rewards</TabsTrigger>
+                <TabsTrigger value="punishments" className="text-xs md:text-sm">Punishments</TabsTrigger>
+                <TabsTrigger value="points" className="text-xs md:text-sm">Points</TabsTrigger>
+                <TabsTrigger value="penalties" className="text-xs md:text-sm">App Penalties</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="reminders" className="space-y-6">
+              <TabsContent value="reminders" className="space-y-6 mt-4">
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Reminder Settings</h3>
                   
@@ -231,7 +235,7 @@ const Settings = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="rewards" className="space-y-6">
+              <TabsContent value="rewards" className="space-y-6 mt-4">
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Streak Rewards</h3>
                   
@@ -280,7 +284,7 @@ const Settings = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="punishments" className="space-y-6">
+              <TabsContent value="punishments" className="space-y-6 mt-4">
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Punishment System</h3>
                   
@@ -370,7 +374,7 @@ const Settings = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="points" className="space-y-6">
+              <TabsContent value="points" className="space-y-6 mt-4">
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Points System</h3>
                   
@@ -400,7 +404,7 @@ const Settings = () => {
               </TabsContent>
 
               {/* NEW App Penalties Tab */}
-              <TabsContent value="penalties" className="space-y-6">
+              <TabsContent value="penalties" className="space-y-6 mt-4">
                 <div>
                   <h3 className="text-lg font-semibold">App Time Limits & Penalties</h3>
                   <p className="text-gray-500 mb-4 text-sm">
