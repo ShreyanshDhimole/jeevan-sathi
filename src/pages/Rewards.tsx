@@ -3,20 +3,29 @@ import React from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Gift, Trophy, Star } from "lucide-react";
+import { PointsButton } from "@/components/PointsButton";
 
 const Rewards = () => {
+  // Mock points - in real app this would come from your points storage
+  const totalPoints = 1250;
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
         <main className="flex-1 flex flex-col px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
           {/* Mobile-optimized header */}
-          <div className="flex items-center gap-4 mb-4 md:mb-6">
-            <SidebarTrigger />
-            <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
-            <div className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-green-600" />
-              <span className="text-lg font-semibold text-gray-800">Rewards</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 md:mb-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
+              <div className="flex items-center gap-2">
+                <Gift className="h-5 w-5 text-green-600" />
+                <span className="text-lg font-semibold text-gray-800">Rewards</span>
+              </div>
+            </div>
+            <div className="sm:ml-auto">
+              <PointsButton points={totalPoints} />
             </div>
           </div>
 
@@ -72,7 +81,7 @@ const Rewards = () => {
                 </div>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                   <span className="text-sm font-medium text-gray-700">Total Points</span>
-                  <span className="text-sm text-gray-600">1,250 pts</span>
+                  <span className="text-sm text-gray-600">{totalPoints} pts</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                   <span className="text-sm font-medium text-gray-700">Next Reward</span>

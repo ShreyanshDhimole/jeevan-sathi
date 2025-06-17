@@ -7,8 +7,12 @@ import { DashboardTiles } from "@/components/DashboardTiles";
 import { RoutineBanner } from "@/components/RoutineBanner";
 import { RoutineCalendar } from "@/components/RoutineCalendar";
 import { MobilePermissionRequest } from "@/components/MobilePermissionRequest";
+import { NotificationSystem } from "@/components/NotificationSystem";
+import { useRoutine } from "@/hooks/useRoutine";
 
 const Dashboard = () => {
+  const { routineItems, updateTask } = useRoutine();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
@@ -26,6 +30,9 @@ const Dashboard = () => {
             <MobilePermissionRequest />
           </div>
 
+          {/* Notification System */}
+          <NotificationSystem routineItems={routineItems} onUpdateTask={updateTask} />
+
           {/* Mobile-friendly content layout */}
           <div className="space-y-4 md:space-y-6">
             {/* Routine banner - full width on mobile */}
@@ -35,12 +42,12 @@ const Dashboard = () => {
 
             {/* Dashboard tiles - responsive grid */}
             <div className="w-full">
-              <DashboardTiles />
+              <DashboardTiles dashboardConfig={{}} />
             </div>
 
             {/* Calendar - full width on mobile, constrained on desktop */}
             <div className="w-full max-w-4xl">
-              <RoutineCalendar />
+              <RoutineCalendar isOpen={false} onClose={() => {}} routineItems={routineItems} />
             </div>
           </div>
         </main>

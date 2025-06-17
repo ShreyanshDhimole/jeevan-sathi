@@ -3,20 +3,29 @@ import React from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AlertTriangle, Clock, Zap } from "lucide-react";
+import { PointsButton } from "@/components/PointsButton";
 
 const Punishments = () => {
+  // Mock points - in real app this would come from your points storage
+  const totalPoints = 1250;
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
         <main className="flex-1 flex flex-col px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
           {/* Mobile-optimized header */}
-          <div className="flex items-center gap-4 mb-4 md:mb-6">
-            <SidebarTrigger />
-            <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              <span className="text-lg font-semibold text-gray-800">Punishments</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 md:mb-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <span className="text-lg font-semibold text-gray-800">Punishments</span>
+              </div>
+            </div>
+            <div className="sm:ml-auto">
+              <PointsButton points={totalPoints} />
             </div>
           </div>
 
