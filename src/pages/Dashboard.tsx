@@ -8,10 +8,13 @@ import { RoutineBanner } from "@/components/RoutineBanner";
 import { RoutineCalendar } from "@/components/RoutineCalendar";
 import { MobilePermissionRequest } from "@/components/MobilePermissionRequest";
 import { NotificationSystem } from "@/components/NotificationSystem";
+import { PointsButton } from "@/components/PointsButton";
 import { useRoutine } from "@/hooks/useRoutine";
+import { getPoints } from "@/utils/pointsStorage";
 
 const Dashboard = () => {
   const { routineItems, updateTask } = useRoutine();
+  const points = getPoints();
 
   return (
     <SidebarProvider>
@@ -19,10 +22,15 @@ const Dashboard = () => {
         <AppSidebar />
         <main className="flex-1 flex flex-col px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
           {/* Mobile-optimized header */}
-          <div className="flex items-center gap-4 mb-4 md:mb-6">
-            <SidebarTrigger />
-            <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
-            <DashboardHeader />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
+              <DashboardHeader />
+            </div>
+            <div className="sm:ml-auto">
+              <PointsButton points={points} />
+            </div>
           </div>
 
           {/* Permission request for mobile */}

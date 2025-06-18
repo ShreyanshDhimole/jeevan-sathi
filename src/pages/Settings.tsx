@@ -177,13 +177,23 @@ const Settings = () => {
 
           <div className="bg-white rounded-xl shadow-lg border border-gray-100">
             <Tabs value={visibleTab} onValueChange={(tab) => setVisibleTab(tab)} className="p-3 md:p-6">
-              {/* Mobile-optimized tab list */}
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1 h-auto">
-                <TabsTrigger value="reminders" className="text-xs md:text-sm">Reminders</TabsTrigger>
-                <TabsTrigger value="rewards" className="text-xs md:text-sm">Rewards</TabsTrigger>
-                <TabsTrigger value="punishments" className="text-xs md:text-sm">Punishments</TabsTrigger>
-                <TabsTrigger value="points" className="text-xs md:text-sm">Points</TabsTrigger>
-                <TabsTrigger value="penalties" className="text-xs md:text-sm">App Penalties</TabsTrigger>
+              {/* Mobile-optimized tab list - vertical stack on small screens */}
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 h-auto p-1">
+                <TabsTrigger value="reminders" className="text-xs md:text-sm py-2 px-1">
+                  Reminders
+                </TabsTrigger>
+                <TabsTrigger value="rewards" className="text-xs md:text-sm py-2 px-1">
+                  Rewards
+                </TabsTrigger>
+                <TabsTrigger value="punishments" className="text-xs md:text-sm py-2 px-1">
+                  Punishments
+                </TabsTrigger>
+                <TabsTrigger value="points" className="text-xs md:text-sm py-2 px-1">
+                  Points
+                </TabsTrigger>
+                <TabsTrigger value="penalties" className="text-xs md:text-sm py-2 px-1 col-span-2 sm:col-span-1">
+                  App Penalties
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="reminders" className="space-y-6 mt-4">
