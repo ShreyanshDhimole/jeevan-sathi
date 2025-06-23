@@ -4,13 +4,13 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AlertTriangle, Clock, Zap } from "lucide-react";
 import { PointsButton } from "@/components/PointsButton";
-import { getPoints } from "@/utils/pointsStorage";
+import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
 import { AppSettings, defaultSettings } from "@/types/settings";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 const Punishments = () => {
-  const totalPoints = getPoints();
+  const [totalPoints, setTotalPoints] = React.useState(getPoints());
   const { toast } = useToast();
   
   // Get punishment settings from localStorage
@@ -19,14 +19,33 @@ const Punishments = () => {
   React.useEffect(() => {
     const saved = localStorage.getItem('appSettings');
     if (saved) {
-      setSettings(JSON.parse(saved));
+      const parsedSettings = JSON.parse(saved);
+      const mergedSettings = {
+        ...defaultSettings,
+        ...parsedSettings,
+        punishments: {
+          ...defaultSettings.punishments,
+          ...parsedSettings.punishments
+        }
+      };
+      setSettings(mergedSettings);
     }
   }, []);
 
+  // Subscribe to points changes for cross-tab sync
+  React.useEffect(() => {
+    const unsubscribe = subscribeToPointsChange(setTotalPoints);
+    return unsubscribe;
+  }, []);
+
   const handleClaim = (punishmentName: string, cost: number) => {
+    const newPoints = Math.max(0, totalPoints - cost); // Don't go below 0
+    setPoints(newPoints);
+    setTotalPoints(newPoints);
+    
     toast({
       title: `${punishmentName} Accepted! 💪`,
-      description: `This will cost you ${cost} points when completed.`,
+      description: `${cost} points deducted. Total: ${newPoints}`,
     });
   };
 

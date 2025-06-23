@@ -4,13 +4,13 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Gift, Trophy, Star } from "lucide-react";
 import { PointsButton } from "@/components/PointsButton";
-import { getPoints } from "@/utils/pointsStorage";
+import { getPoints, setPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
 import { AppSettings, defaultSettings } from "@/types/settings";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 const Rewards = () => {
-  const totalPoints = getPoints();
+  const [totalPoints, setTotalPoints] = React.useState(getPoints());
   const { toast } = useToast();
 
   // Get rewards settings from localStorage with proper initialization
@@ -41,10 +41,20 @@ const Rewards = () => {
     }
   }, []);
 
+  // Subscribe to points changes for cross-tab sync
+  React.useEffect(() => {
+    const unsubscribe = subscribeToPointsChange(setTotalPoints);
+    return unsubscribe;
+  }, []);
+
   const handleClaim = (rewardName: string, points: number) => {
+    const newPoints = totalPoints + points;
+    setPoints(newPoints);
+    setTotalPoints(newPoints);
+    
     toast({
       title: `${rewardName} Claimed! 🎉`,
-      description: `You earned ${points} points!`,
+      description: `You earned ${points} points! Total: ${newPoints}`,
     });
   };
 

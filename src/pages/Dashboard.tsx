@@ -10,11 +10,19 @@ import { MobilePermissionRequest } from "@/components/MobilePermissionRequest";
 import { NotificationSystem } from "@/components/NotificationSystem";
 import { PointsButton } from "@/components/PointsButton";
 import { useRoutine } from "@/hooks/useRoutine";
-import { getPoints } from "@/utils/pointsStorage";
+import { useDashboardConfig } from "@/hooks/useDashboardConfig";
+import { getPoints, subscribeToPointsChange } from "@/utils/pointsStorage";
 
 const Dashboard = () => {
   const { routineItems, updateTask } = useRoutine();
-  const points = getPoints();
+  const [points, setPoints] = React.useState(getPoints());
+  const dashboardConfig = useDashboardConfig(routineItems);
+
+  // Subscribe to points changes for cross-tab sync
+  React.useEffect(() => {
+    const unsubscribe = subscribeToPointsChange(setPoints);
+    return unsubscribe;
+  }, []);
 
   return (
     <SidebarProvider>
@@ -52,7 +60,7 @@ const Dashboard = () => {
 
             {/* Dashboard tiles - responsive grid */}
             <div className="w-full min-w-0">
-              <DashboardTiles dashboardConfig={{}} />
+              <DashboardTiles dashboardConfig={dashboardConfig} />
             </div>
 
             {/* Calendar - full width on mobile, constrained on desktop */}
