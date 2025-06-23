@@ -1,4 +1,5 @@
 import { Clock, Target, Gift, TrendingUp, Calendar, CheckCircle2, Star, Zap } from "lucide-react";
+import { RoutineItem } from "@/types/routine";
 
 // Dynamic import icon map
 const iconMap = {
@@ -12,16 +13,21 @@ const iconMap = {
   Zap,
 };
 
+interface DashboardTilesProps {
+  dashboardConfig: any;
+  routineItems?: RoutineItem[];
+}
+
 /**
  * DashboardTiles expects a 'dashboardConfig' prop that contains all
  * layout, textual, and icon config for each dashboard card.
  *
  * No hardcoded text or card content, everything is passed via config and data.
  */
-export function DashboardTiles({ dashboardConfig }) {
+export function DashboardTiles({ dashboardConfig }: DashboardTilesProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-      {dashboardConfig.map((card) => {
+      {dashboardConfig.map && dashboardConfig.map((card) => {
         const CardIcon = iconMap[card.icon] || Calendar;
         const data = card.getData();
         switch (card.key) {

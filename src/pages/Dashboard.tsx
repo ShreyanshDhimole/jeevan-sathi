@@ -47,12 +47,12 @@ const Dashboard = () => {
           <div className="space-y-4 md:space-y-6 w-full min-w-0">
             {/* Routine banner - full width on mobile */}
             <div className="w-full min-w-0">
-              <RoutineBanner />
+              <RoutineBanner routineItems={routineItems} />
             </div>
 
             {/* Dashboard tiles - responsive grid */}
             <div className="w-full min-w-0">
-              <DashboardTiles dashboardConfig={{}} routineItems={routineItems} />
+              <DashboardTiles dashboardConfig={{}} />
             </div>
 
             {/* Calendar - full width on mobile, constrained on desktop */}
