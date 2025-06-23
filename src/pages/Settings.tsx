@@ -131,7 +131,26 @@ const Settings = () => {
   React.useEffect(() => {
     const saved = localStorage.getItem('appSettings');
     if (saved) {
-      setSettings(JSON.parse(saved));
+      try {
+        const parsedSettings = JSON.parse(saved);
+        // Ensure all required properties exist by merging with defaults
+        const mergedSettings = {
+          ...defaultSettings,
+          ...parsedSettings,
+          rewards: {
+            ...defaultSettings.rewards,
+            ...parsedSettings.rewards
+          },
+          punishments: {
+            ...defaultSettings.punishments,
+            ...parsedSettings.punishments
+          }
+        };
+        setSettings(mergedSettings);
+      } catch (error) {
+        console.error('Error parsing saved settings:', error);
+        setSettings(defaultSettings);
+      }
     }
   }, []);
 
@@ -193,6 +212,11 @@ const Settings = () => {
     fetchLimitsAndUsage();
   };
 
+  // Safety check to ensure settings are properly initialized
+  if (!settings || !settings.rewards || !settings.punishments) {
+    return <div>Loading settings...</div>;
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30 overflow-x-hidden">
@@ -250,7 +274,7 @@ const Settings = () => {
                       <p className="text-xs text-gray-500">Get notifications for upcoming tasks</p>
                     </div>
                     <Switch 
-                      checked={settings.reminders.enableReminders}
+                      checked={settings.reminders?.enableReminders || false}
                       onCheckedChange={(checked) => updateSettings('reminders', 'enableReminders', checked)}
                     />
                   </div>
@@ -260,7 +284,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">Pre-task reminder (minutes before)</label>
                       <input 
                         type="number" 
-                        value={settings.reminders.preTaskMinutes}
+                        value={settings.reminders?.preTaskMinutes || 15}
                         onChange={(e) => updateSettings('reminders', 'preTaskMinutes', parseInt(e.target.value))}
                         className="w-full mt-1 px-3 py-2 border rounded-lg"
                       />
@@ -270,7 +294,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">Overdue reminder (minutes after missed)</label>
                       <input 
                         type="number" 
-                        value={settings.reminders.overdueMinutes}
+                        value={settings.reminders?.overdueMinutes || 30}
                         onChange={(e) => updateSettings('reminders', 'overdueMinutes', parseInt(e.target.value))}
                         className="w-full mt-1 px-3 py-2 border rounded-lg"
                       />
@@ -280,7 +304,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">Motivational nudge (minutes into task)</label>
                       <input 
                         type="number" 
-                        value={settings.reminders.motivationalNudgeMinutes}
+                        value={settings.reminders?.motivationalNudgeMinutes || 10}
                         onChange={(e) => updateSettings('reminders', 'motivationalNudgeMinutes', parseInt(e.target.value))}
                         className="w-full mt-1 px-3 py-2 border rounded-lg"
                       />
@@ -300,7 +324,7 @@ const Settings = () => {
                       <p className="text-xs text-gray-500">Allow users to claim rewards for achievements</p>
                     </div>
                     <Switch 
-                      checked={settings.rewards.enableRewards}
+                      checked={settings.rewards?.enableRewards || false}
                       onCheckedChange={(checked) => updateSettings('rewards', 'enableRewards', checked)}
                     />
                   </div>
@@ -311,7 +335,7 @@ const Settings = () => {
                       <Button onClick={addCustomReward} size="sm">Add Custom</Button>
                     </div>
                     
-                    {settings.rewards.availableRewards.map((reward) => (
+                    {settings.rewards?.availableRewards?.map((reward) => (
                       <div key={reward.id} className="p-4 border rounded-lg space-y-3">
                         <div className="flex items-center justify-between">
                           <input 
@@ -368,7 +392,7 @@ const Settings = () => {
                       <p className="text-xs text-gray-500">Apply consequences for missed tasks</p>
                     </div>
                     <Switch 
-                      checked={settings.punishments.enablePunishments}
+                      checked={settings.punishments?.enablePunishments || false}
                       onCheckedChange={(checked) => updateSettings('punishments', 'enablePunishments', checked)}
                     />
                   </div>
@@ -378,7 +402,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">Missed task penalty (points)</label>
                       <input 
                         type="number" 
-                        value={settings.punishments.missedTaskPenalty}
+                        value={settings.punishments?.missedTaskPenalty || 10}
                         onChange={(e) => updateSettings('punishments', 'missedTaskPenalty', parseInt(e.target.value))}
                         className="w-full mt-1 px-3 py-2 border rounded-lg"
                       />
@@ -388,7 +412,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">Streak break penalty (points)</label>
                       <input 
                         type="number" 
-                        value={settings.punishments.streakBreakPenalty}
+                        value={settings.punishments?.streakBreakPenalty || 25}
                         onChange={(e) => updateSettings('punishments', 'streakBreakPenalty', parseInt(e.target.value))}
                         className="w-full mt-1 px-3 py-2 border rounded-lg"
                       />
@@ -401,7 +425,7 @@ const Settings = () => {
                       <Button onClick={addCustomPunishment} size="sm">Add Custom</Button>
                     </div>
                     
-                    {settings.punishments.availablePunishments.map((punishment) => (
+                    {settings.punishments?.availablePunishments?.map((punishment) => (
                       <div key={punishment.id} className="p-4 border rounded-lg space-y-3">
                         <div className="flex items-center justify-between">
                           <input 
@@ -458,7 +482,7 @@ const Settings = () => {
                       <p className="text-xs text-gray-500">Remove task points when you miss them</p>
                     </div>
                     <Switch 
-                      checked={settings.points.missedTaskPenalty}
+                      checked={settings.points?.missedTaskPenalty || false}
                       onCheckedChange={(checked) => updateSettings('points', 'missedTaskPenalty', checked)}
                     />
                   </div>
@@ -469,7 +493,7 @@ const Settings = () => {
                     <input 
                       type="number" 
                       step="0.1"
-                      value={settings.points.qualityBonusMultiplier}
+                      value={settings.points?.qualityBonusMultiplier || 0.2}
                       onChange={(e) => updateSettings('points', 'qualityBonusMultiplier', parseFloat(e.target.value))}
                       className="w-full mt-1 px-3 py-2 border rounded-lg"
                     />
@@ -574,7 +598,7 @@ const Settings = () => {
                       <p className="text-xs text-gray-500">Get bonus points for maintaining streaks</p>
                     </div>
                     <Switch 
-                      checked={settings.streaks.enableStreakRewards}
+                      checked={settings.streaks?.enableStreakRewards || false}
                       onCheckedChange={(checked) => updateSettings('streaks', 'enableStreakRewards', checked)}
                     />
                   </div>
@@ -584,7 +608,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">7-day streak bonus points</label>
                       <input 
                         type="number" 
-                        value={settings.streaks.weekReward}
+                        value={settings.streaks?.weekReward || 50}
                         onChange={(e) => updateSettings('streaks', 'weekReward', parseInt(e.target.value))}
                         className="w-full mt-1 px-3 py-2 border rounded-lg"
                       />
@@ -594,7 +618,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">14-day streak bonus points</label>
                       <input 
                         type="number" 
-                        value={settings.streaks.biWeekReward}
+                        value={settings.streaks?.biWeekReward || 100}
                         onChange={(e) => updateSettings('streaks', 'biWeekReward', parseInt(e.target.value))}
                         className="w-full mt-1 px-3 py-2 border rounded-lg"
                       />
@@ -604,7 +628,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">30-day streak bonus points</label>
                       <input 
                         type="number" 
-                        value={settings.streaks.monthReward}
+                        value={settings.streaks?.monthReward || 200}
                         onChange={(e) => updateSettings('streaks', 'monthReward', parseInt(e.target.value))}
                         className="w-full mt-1 px-3 py-2 border rounded-lg"
                       />

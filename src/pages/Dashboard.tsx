@@ -18,7 +18,7 @@ const Dashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30 overflow-x-hidden">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
         <AppSidebar />
         <main className="flex-1 flex flex-col w-full min-w-0 px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
           {/* Mobile-optimized header */}
@@ -52,7 +52,7 @@ const Dashboard = () => {
 
             {/* Dashboard tiles - responsive grid */}
             <div className="w-full min-w-0">
-              <DashboardTiles dashboardConfig={{}} />
+              <DashboardTiles dashboardConfig={{}} routineItems={routineItems} />
             </div>
 
             {/* Calendar - full width on mobile, constrained on desktop */}
