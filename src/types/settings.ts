@@ -22,6 +22,10 @@ export interface AppSettings {
     streakBreakPenalty: number;
     availablePunishments: Punishment[];
   };
+  rewards: {
+    enableRewards: boolean;
+    availableRewards: Reward[];
+  };
 }
 
 export interface Punishment {
@@ -30,6 +34,15 @@ export interface Punishment {
   description: string;
   severity: 'light' | 'medium' | 'severe';
   cost: number;
+  icon: string;
+}
+
+export interface Reward {
+  id: string;
+  name: string;
+  description: string;
+  category: 'streak' | 'achievement' | 'bonus';
+  points: number;
   icon: string;
 }
 
@@ -60,6 +73,16 @@ export const defaultSettings: AppSettings = {
       { id: '3', name: 'Cold Shower', description: '2 minute cold shower', severity: 'medium', cost: 100, icon: '🚿' },
       { id: '4', name: 'Donate Money', description: 'Donate $10 to charity', severity: 'severe', cost: 200, icon: '💰' },
       { id: '5', name: 'Wake Up Early', description: 'Wake up 1 hour earlier tomorrow', severity: 'severe', cost: 150, icon: '⏰' },
+    ],
+  },
+  rewards: {
+    enableRewards: true,
+    availableRewards: [
+      { id: '1', name: 'Week Streak', description: 'Complete 7 days in a row', category: 'streak', points: 100, icon: '🏆' },
+      { id: '2', name: 'Perfect Day', description: 'Complete all tasks in a day', category: 'achievement', points: 50, icon: '⭐' },
+      { id: '3', name: 'Month Champion', description: '30-day streak achievement', category: 'streak', points: 500, icon: '🎁' },
+      { id: '4', name: 'Early Bird', description: 'Complete morning routine 5 days straight', category: 'bonus', points: 75, icon: '🌅' },
+      { id: '5', name: 'Task Master', description: 'Complete 20 tasks in a week', category: 'achievement', points: 150, icon: '⚡' },
     ],
   },
 };

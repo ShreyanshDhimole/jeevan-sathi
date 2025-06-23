@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { AppSettings, defaultSettings, Punishment } from "@/types/settings";
+import { AppSettings, defaultSettings, Punishment, Reward } from "@/types/settings";
 import { Input } from "@/components/ui/input";
 
 // Capacitor/simulated ScreenTimePlugin bridge
@@ -57,6 +57,25 @@ const Settings = () => {
     }));
   };
 
+  const addCustomReward = () => {
+    const newReward: Reward = {
+      id: Date.now().toString(),
+      name: 'Custom Reward',
+      description: 'Describe your reward',
+      category: 'achievement',
+      points: 100,
+      icon: '🎉'
+    };
+    
+    setSettings(prev => ({
+      ...prev,
+      rewards: {
+        ...prev.rewards,
+        availableRewards: [...prev.rewards.availableRewards, newReward]
+      }
+    }));
+  };
+
   const updatePunishment = (id: string, updates: Partial<Punishment>) => {
     setSettings(prev => ({
       ...prev,
@@ -69,12 +88,34 @@ const Settings = () => {
     }));
   };
 
+  const updateReward = (id: string, updates: Partial<Reward>) => {
+    setSettings(prev => ({
+      ...prev,
+      rewards: {
+        ...prev.rewards,
+        availableRewards: prev.rewards.availableRewards.map(r => 
+          r.id === id ? { ...r, ...updates } : r
+        )
+      }
+    }));
+  };
+
   const deletePunishment = (id: string) => {
     setSettings(prev => ({
       ...prev,
       punishments: {
         ...prev.punishments,
         availablePunishments: prev.punishments.availablePunishments.filter(p => p.id !== id)
+      }
+    }));
+  };
+
+  const deleteReward = (id: string) => {
+    setSettings(prev => ({
+      ...prev,
+      rewards: {
+        ...prev.rewards,
+        availableRewards: prev.rewards.availableRewards.filter(r => r.id !== id)
       }
     }));
   };
@@ -154,12 +195,12 @@ const Settings = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30 overflow-x-hidden">
         <AppSidebar />
-        <main className="flex-1 flex flex-col px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
+        <main className="flex-1 flex flex-col w-full min-w-0 px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
           {/* Mobile-optimized header */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6 w-full">
+            <div className="flex items-center gap-4 min-w-0 flex-1">
               <SidebarTrigger />
               <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
               <div className="flex items-center gap-2">
@@ -167,7 +208,7 @@ const Settings = () => {
                 <span className="text-lg font-semibold text-gray-800">Settings</span>
               </div>
             </div>
-            <div className="sm:ml-auto">
+            <div className="flex-shrink-0">
               <Button onClick={saveSettings} className="flex items-center gap-2 w-full sm:w-auto">
                 <Save className="h-4 w-4" />
                 Save Settings
@@ -175,10 +216,10 @@ const Settings = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 w-full min-w-0">
             <Tabs value={visibleTab} onValueChange={(tab) => setVisibleTab(tab)} className="p-3 md:p-6">
-              {/* Mobile-optimized tab list - vertical stack on small screens */}
-              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 h-auto p-1">
+              {/* Mobile-optimized tab list */}
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1 h-auto p-1">
                 <TabsTrigger value="reminders" className="text-xs md:text-sm py-2 px-1">
                   Reminders
                 </TabsTrigger>
@@ -191,8 +232,11 @@ const Settings = () => {
                 <TabsTrigger value="points" className="text-xs md:text-sm py-2 px-1">
                   Points
                 </TabsTrigger>
-                <TabsTrigger value="penalties" className="text-xs md:text-sm py-2 px-1 col-span-2 sm:col-span-1">
+                <TabsTrigger value="penalties" className="text-xs md:text-sm py-2 px-1">
                   App Penalties
+                </TabsTrigger>
+                <TabsTrigger value="streaks" className="text-xs md:text-sm py-2 px-1">
+                  Streaks
                 </TabsTrigger>
               </TabsList>
 
@@ -245,51 +289,71 @@ const Settings = () => {
                 </div>
               </TabsContent>
 
+              {/* NEW Rewards Tab */}
               <TabsContent value="rewards" className="space-y-6 mt-4">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Streak Rewards</h3>
+                  <h3 className="text-lg font-semibold">Rewards System</h3>
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium">Enable Streak Rewards</label>
-                      <p className="text-xs text-gray-500">Get bonus points for maintaining streaks</p>
+                      <label className="text-sm font-medium">Enable Rewards</label>
+                      <p className="text-xs text-gray-500">Allow users to claim rewards for achievements</p>
                     </div>
                     <Switch 
-                      checked={settings.streaks.enableStreakRewards}
-                      onCheckedChange={(checked) => updateSettings('streaks', 'enableStreakRewards', checked)}
+                      checked={settings.rewards.enableRewards}
+                      onCheckedChange={(checked) => updateSettings('rewards', 'enableRewards', checked)}
                     />
                   </div>
 
-                  <div className="grid gap-4">
-                    <div>
-                      <label className="text-sm font-medium">7-day streak bonus points</label>
-                      <input 
-                        type="number" 
-                        value={settings.streaks.weekReward}
-                        onChange={(e) => updateSettings('streaks', 'weekReward', parseInt(e.target.value))}
-                        className="w-full mt-1 px-3 py-2 border rounded-lg"
-                      />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">Available Rewards</h4>
+                      <Button onClick={addCustomReward} size="sm">Add Custom</Button>
                     </div>
                     
-                    <div>
-                      <label className="text-sm font-medium">14-day streak bonus points</label>
-                      <input 
-                        type="number" 
-                        value={settings.streaks.biWeekReward}
-                        onChange={(e) => updateSettings('streaks', 'biWeekReward', parseInt(e.target.value))}
-                        className="w-full mt-1 px-3 py-2 border rounded-lg"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium">30-day streak bonus points</label>
-                      <input 
-                        type="number" 
-                        value={settings.streaks.monthReward}
-                        onChange={(e) => updateSettings('streaks', 'monthReward', parseInt(e.target.value))}
-                        className="w-full mt-1 px-3 py-2 border rounded-lg"
-                      />
-                    </div>
+                    {settings.rewards.availableRewards.map((reward) => (
+                      <div key={reward.id} className="p-4 border rounded-lg space-y-3">
+                        <div className="flex items-center justify-between">
+                          <input 
+                            type="text" 
+                            value={reward.name}
+                            onChange={(e) => updateReward(reward.id, { name: e.target.value })}
+                            className="font-medium bg-transparent border-none p-0 text-sm"
+                          />
+                          <Button 
+                            onClick={() => deleteReward(reward.id)}
+                            variant="destructive" 
+                            size="sm"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                        <Textarea 
+                          value={reward.description}
+                          onChange={(e) => updateReward(reward.id, { description: e.target.value })}
+                          placeholder="Describe the reward"
+                          className="text-sm"
+                        />
+                        <div className="flex gap-2">
+                          <select 
+                            value={reward.category}
+                            onChange={(e) => updateReward(reward.id, { category: e.target.value as any })}
+                            className="px-2 py-1 border rounded text-sm"
+                          >
+                            <option value="streak">Streak</option>
+                            <option value="achievement">Achievement</option>
+                            <option value="bonus">Bonus</option>
+                          </select>
+                          <input 
+                            type="number" 
+                            value={reward.points}
+                            onChange={(e) => updateReward(reward.id, { points: parseInt(e.target.value) })}
+                            placeholder="Points value"
+                            className="px-2 py-1 border rounded text-sm w-20"
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </TabsContent>
@@ -495,6 +559,55 @@ const Settings = () => {
                     <div>
                       You may need to grant usage stats permission on your phone for this feature to work.<br />
                       The penalty system applies automatically if you exceed your set limits.
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="streaks" className="space-y-6 mt-4">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Streak Rewards</h3>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-medium">Enable Streak Rewards</label>
+                      <p className="text-xs text-gray-500">Get bonus points for maintaining streaks</p>
+                    </div>
+                    <Switch 
+                      checked={settings.streaks.enableStreakRewards}
+                      onCheckedChange={(checked) => updateSettings('streaks', 'enableStreakRewards', checked)}
+                    />
+                  </div>
+
+                  <div className="grid gap-4">
+                    <div>
+                      <label className="text-sm font-medium">7-day streak bonus points</label>
+                      <input 
+                        type="number" 
+                        value={settings.streaks.weekReward}
+                        onChange={(e) => updateSettings('streaks', 'weekReward', parseInt(e.target.value))}
+                        className="w-full mt-1 px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">14-day streak bonus points</label>
+                      <input 
+                        type="number" 
+                        value={settings.streaks.biWeekReward}
+                        onChange={(e) => updateSettings('streaks', 'biWeekReward', parseInt(e.target.value))}
+                        className="w-full mt-1 px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">30-day streak bonus points</label>
+                      <input 
+                        type="number" 
+                        value={settings.streaks.monthReward}
+                        onChange={(e) => updateSettings('streaks', 'monthReward', parseInt(e.target.value))}
+                        className="w-full mt-1 px-3 py-2 border rounded-lg"
+                      />
                     </div>
                   </div>
                 </div>

@@ -5,18 +5,39 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Gift, Trophy, Star } from "lucide-react";
 import { PointsButton } from "@/components/PointsButton";
 import { getPoints } from "@/utils/pointsStorage";
+import { AppSettings, defaultSettings } from "@/types/settings";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Rewards = () => {
   const totalPoints = getPoints();
+  const { toast } = useToast();
+
+  // Get rewards settings from localStorage
+  const [settings, setSettings] = React.useState<AppSettings>(defaultSettings);
+  
+  React.useEffect(() => {
+    const saved = localStorage.getItem('appSettings');
+    if (saved) {
+      setSettings(JSON.parse(saved));
+    }
+  }, []);
+
+  const handleClaim = (rewardName: string, points: number) => {
+    toast({
+      title: `${rewardName} Claimed! 🎉`,
+      description: `You earned ${points} points!`,
+    });
+  };
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30 overflow-x-hidden">
         <AppSidebar />
-        <main className="flex-1 flex flex-col px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
+        <main className="flex-1 flex flex-col w-full min-w-0 px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
           {/* Mobile-optimized header */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6 w-full">
+            <div className="flex items-center gap-4 min-w-0 flex-1">
               <SidebarTrigger />
               <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
               <div className="flex items-center gap-2">
@@ -24,51 +45,53 @@ const Rewards = () => {
                 <span className="text-lg font-semibold text-gray-800">Rewards</span>
               </div>
             </div>
-            <div className="sm:ml-auto">
+            <div className="flex-shrink-0">
               <PointsButton points={totalPoints} />
             </div>
           </div>
 
           {/* Mobile-friendly content */}
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-4 md:space-y-6 w-full min-w-0">
             <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border border-gray-100">
               <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">Available Rewards</h2>
               
-              {/* Reward cards - responsive grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                <div className="p-4 md:p-6 rounded-lg border border-green-200 bg-green-50">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Trophy className="h-6 w-6 text-green-600" />
-                    <span className="font-semibold text-green-800">Week Streak</span>
-                  </div>
-                  <p className="text-sm text-green-700 mb-4">Complete 7 days in a row</p>
-                  <div className="text-right">
-                    <span className="text-lg font-bold text-green-600">+100 pts</span>
-                  </div>
+              {/* Reward cards from settings - responsive grid */}
+              {settings.rewards.availableRewards.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {settings.rewards.availableRewards.map((reward) => (
+                    <div key={reward.id} className="p-4 md:p-6 rounded-lg border border-gray-200 bg-gray-50">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-2xl">{reward.icon}</span>
+                        <span className="font-semibold text-gray-800">{reward.name}</span>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-4">{reward.description}</p>
+                      <div className="flex justify-between items-center">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          reward.category === 'streak' ? 'bg-blue-100 text-blue-700' :
+                          reward.category === 'achievement' ? 'bg-green-100 text-green-700' :
+                          'bg-purple-100 text-purple-700'
+                        }`}>
+                          {reward.category}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold text-green-600">+{reward.points} pts</span>
+                          <Button 
+                            size="sm"
+                            onClick={() => handleClaim(reward.name, reward.points)}
+                            className="bg-green-500 hover:bg-green-600"
+                          >
+                            Claim
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="p-4 md:p-6 rounded-lg border border-yellow-200 bg-yellow-50">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Star className="h-6 w-6 text-yellow-600" />
-                    <span className="font-semibold text-yellow-800">Perfect Day</span>
-                  </div>
-                  <p className="text-sm text-yellow-700 mb-4">Complete all tasks in a day</p>
-                  <div className="text-right">
-                    <span className="text-lg font-bold text-yellow-600">+50 pts</span>
-                  </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No rewards configured. Add rewards in Settings to see them here.
                 </div>
-
-                <div className="p-4 md:p-6 rounded-lg border border-blue-200 bg-blue-50 sm:col-span-2 lg:col-span-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Gift className="h-6 w-6 text-blue-600" />
-                    <span className="font-semibold text-blue-800">Month Champion</span>
-                  </div>
-                  <p className="text-sm text-blue-700 mb-4">30-day streak achievement</p>
-                  <div className="text-right">
-                    <span className="text-lg font-bold text-blue-600">+500 pts</span>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Progress section */}

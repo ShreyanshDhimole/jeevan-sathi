@@ -6,9 +6,12 @@ import { AlertTriangle, Clock, Zap } from "lucide-react";
 import { PointsButton } from "@/components/PointsButton";
 import { getPoints } from "@/utils/pointsStorage";
 import { AppSettings, defaultSettings } from "@/types/settings";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Punishments = () => {
   const totalPoints = getPoints();
+  const { toast } = useToast();
   
   // Get punishment settings from localStorage
   const [settings, setSettings] = React.useState<AppSettings>(defaultSettings);
@@ -20,14 +23,21 @@ const Punishments = () => {
     }
   }, []);
 
+  const handleClaim = (punishmentName: string, cost: number) => {
+    toast({
+      title: `${punishmentName} Accepted! 💪`,
+      description: `This will cost you ${cost} points when completed.`,
+    });
+  };
+
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30 overflow-x-hidden">
         <AppSidebar />
-        <main className="flex-1 flex flex-col px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
+        <main className="flex-1 flex flex-col w-full min-w-0 px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
           {/* Mobile-optimized header */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6 w-full">
+            <div className="flex items-center gap-4 min-w-0 flex-1">
               <SidebarTrigger />
               <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
               <div className="flex items-center gap-2">
@@ -35,13 +45,13 @@ const Punishments = () => {
                 <span className="text-lg font-semibold text-gray-800">Punishments</span>
               </div>
             </div>
-            <div className="sm:ml-auto">
+            <div className="flex-shrink-0">
               <PointsButton points={totalPoints} />
             </div>
           </div>
 
           {/* Mobile-friendly content */}
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-4 md:space-y-6 w-full min-w-0">
             <div className="bg-white rounded-xl p-4 md:p-6 shadow-lg border border-gray-100">
               <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">Active Penalties</h2>
               
@@ -91,7 +101,7 @@ const Punishments = () => {
                         <span className="font-semibold text-gray-800">{punishment.name}</span>
                       </div>
                       <p className="text-sm text-gray-600 mb-3">{punishment.description}</p>
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center mb-3">
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           punishment.severity === 'severe' ? 'bg-red-100 text-red-700' :
                           punishment.severity === 'medium' ? 'bg-yellow-100 text-yellow-700' :
@@ -101,6 +111,14 @@ const Punishments = () => {
                         </span>
                         <span className="text-sm font-bold text-gray-700">{punishment.cost} pts</span>
                       </div>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => handleClaim(punishment.name, punishment.cost)}
+                        className="w-full"
+                      >
+                        Accept Punishment
+                      </Button>
                     </div>
                   ))}
                 </div>
