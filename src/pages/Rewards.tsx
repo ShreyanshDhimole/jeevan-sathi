@@ -13,13 +13,31 @@ const Rewards = () => {
   const totalPoints = getPoints();
   const { toast } = useToast();
 
-  // Get rewards settings from localStorage
+  // Get rewards settings from localStorage with proper initialization
   const [settings, setSettings] = React.useState<AppSettings>(defaultSettings);
+  const [isLoading, setIsLoading] = React.useState(true);
   
   React.useEffect(() => {
-    const saved = localStorage.getItem('appSettings');
-    if (saved) {
-      setSettings(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem('appSettings');
+      if (saved) {
+        const parsedSettings = JSON.parse(saved);
+        // Ensure all required properties exist by merging with defaults
+        const mergedSettings = {
+          ...defaultSettings,
+          ...parsedSettings,
+          rewards: {
+            ...defaultSettings.rewards,
+            ...parsedSettings.rewards
+          }
+        };
+        setSettings(mergedSettings);
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      setSettings(defaultSettings);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -29,6 +47,22 @@ const Rewards = () => {
       description: `You earned ${points} points!`,
     });
   };
+
+  // Show loading state while settings are being loaded
+  if (isLoading) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50/30 overflow-x-hidden">
+          <AppSidebar />
+          <main className="flex-1 flex flex-col w-full min-w-0 px-3 md:px-4 xl:px-8 pt-4 md:pt-6 bg-transparent">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-gray-500">Loading rewards...</div>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -56,7 +90,7 @@ const Rewards = () => {
               <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">Available Rewards</h2>
               
               {/* Reward cards from settings - responsive grid */}
-              {settings.rewards.availableRewards.length > 0 ? (
+              {settings?.rewards?.availableRewards && settings.rewards.availableRewards.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {settings.rewards.availableRewards.map((reward) => (
                     <div key={reward.id} className="p-4 md:p-6 rounded-lg border border-gray-200 bg-gray-50">
@@ -109,7 +143,7 @@ const Rewards = () => {
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                   <span className="text-sm font-medium text-gray-700">Next Reward</span>
                   <span className="text-sm text-blue-600">Week Streak (4 days to go)</span>
-                </div>
+                </div>  
               </div>
             </div>
           </div>
