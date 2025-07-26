@@ -65,9 +65,13 @@ export function useTasks() {
     description?: string;
   }) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { data, error } = await (supabase as any)
         .from('tasks')
         .insert({
+          user_id: user.id, // This was missing!
           task: newTask.task,
           priority: newTask.priority,
           completed: false,
