@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Task {
   id: string;
@@ -6,46 +7,55 @@ export interface Task {
   priority: 'high' | 'medium' | 'low';
   completed: boolean;
   starred: boolean;
-  duration?: number; // New: task duration (minutes)
+  duration?: number;
   preferredTime?: string;
   flexible?: boolean;
   points?: number;
   description?: string;
-  completedAt?: string; // <-- Added to support usages in dashboard and stats
+  completedAt?: string;
 }
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load from localStorage on mount
+  // Load tasks from Supabase
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("tasks");
-      if (stored) setTasks(JSON.parse(stored));
-      else {
-        // Demo initial tasks
-        setTasks([
-          { id: '1', task: "Complete project proposal", priority: "high", completed: false, starred: false },
-          { id: '2', task: "Call insurance company", priority: "medium", completed: true, starred: false },
-          { id: '3', task: "Buy groceries", priority: "low", completed: false, starred: true },
-          { id: '4', task: "Schedule dentist appointment", priority: "medium", completed: false, starred: false },
-          { id: '5', task: "Review team feedback", priority: "high", completed: true, starred: true },
-        ]);
-      }
-    } catch (e) {
-      // fallback to empty
-      setTasks([]);
-    }
+    loadTasks();
   }, []);
 
-  // Sync to localStorage
-  useEffect(() => {
+  const loadTasks = async () => {
     try {
-      localStorage.setItem("tasks", JSON.stringify(tasks));
-    } catch (e) {}
-  }, [tasks]);
+      const { data, error } = await (supabase as any)
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const addTask = (newTask: { 
+      if (error) throw error;
+
+      const formattedTasks: Task[] = (data || []).map((task: any) => ({
+        id: task.id,
+        task: task.task,
+        priority: task.priority as 'high' | 'medium' | 'low',
+        completed: task.completed,
+        starred: task.starred,
+        duration: task.duration || undefined,
+        preferredTime: task.preferred_time || undefined,
+        flexible: task.flexible || undefined,
+        points: task.points || undefined,
+        description: task.description || undefined,
+        completedAt: task.completed_at || undefined,
+      }));
+
+      setTasks(formattedTasks);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addTask = async (newTask: { 
     task: string; 
     priority: 'high'|'medium'|'low'; 
     preferredTime?: string; 
@@ -54,35 +64,113 @@ export function useTasks() {
     duration?: number;
     description?: string;
   }) => {
-    const t: Task = {
-      id: Date.now().toString(),
-      task: newTask.task,
-      priority: newTask.priority,
-      completed: false,
-      starred: false,
-      duration: newTask.duration ?? 30, // <--- ensure duration is always set
-      preferredTime: newTask.preferredTime,
-      flexible: newTask.flexible,
-      points: newTask.points,
-      description: newTask.description,
-    };
-    setTasks(prev => [...prev, t]);
+    try {
+      const { data, error } = await (supabase as any)
+        .from('tasks')
+        .insert({
+          task: newTask.task,
+          priority: newTask.priority,
+          completed: false,
+          starred: false,
+          duration: newTask.duration ?? 30,
+          preferred_time: newTask.preferredTime,
+          flexible: newTask.flexible ?? false,
+          points: newTask.points,
+          description: newTask.description,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const formattedTask: Task = {
+        id: data.id,
+        task: data.task,
+        priority: data.priority as 'high' | 'medium' | 'low',
+        completed: data.completed,
+        starred: data.starred,
+        duration: data.duration || undefined,
+        preferredTime: data.preferred_time || undefined,
+        flexible: data.flexible || undefined,
+        points: data.points || undefined,
+        description: data.description || undefined,
+        completedAt: data.completed_at || undefined,
+      };
+
+      setTasks(prev => [formattedTask, ...prev]);
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
   };
 
-  const deleteTask = (id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
+  const deleteTask = async (id: string) => {
+    try {
+      const { error } = await (supabase as any)
+        .from('tasks')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setTasks(prev => prev.filter(t => t.id !== id));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
   };
 
-  const toggleComplete = (id: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  const toggleComplete = async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const newCompleted = !task.completed;
+    const completedAt = newCompleted ? new Date().toISOString() : null;
+
+    try {
+      const { error } = await (supabase as any)
+        .from('tasks')
+        .update({ 
+          completed: newCompleted,
+          completed_at: completedAt
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setTasks(prev => prev.map(t => 
+        t.id === id 
+          ? { ...t, completed: newCompleted, completedAt: completedAt || undefined }
+          : t
+      ));
+    } catch (error) {
+      console.error('Error toggling task completion:', error);
+    }
   };
 
-  const toggleStar = (id: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, starred: !t.starred } : t));
+  const toggleStar = async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const newStarred = !task.starred;
+
+    try {
+      const { error } = await (supabase as any)
+        .from('tasks')
+        .update({ starred: newStarred })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setTasks(prev => prev.map(t => 
+        t.id === id ? { ...t, starred: newStarred } : t
+      ));
+    } catch (error) {
+      console.error('Error toggling task star:', error);
+    }
   };
 
   return {
     tasks,
+    loading,
     addTask,
     deleteTask,
     toggleComplete,
